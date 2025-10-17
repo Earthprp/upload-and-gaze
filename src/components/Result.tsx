@@ -15,8 +15,9 @@ interface AnalysisData {
 }
 
 export const Result = ({ data }: { data: AnalysisData }) => {
-  const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
+  const getSeverityColor = (severity?: string) => {
+    const severityLower = severity?.toLowerCase() || 'moderate';
+    switch (severityLower) {
       case 'severe':
         return 'bg-red-100 text-red-800 border-red-200';
       case 'moderate':
@@ -33,7 +34,7 @@ export const Result = ({ data }: { data: AnalysisData }) => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Skin Analysis Results</h2>
         <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getSeverityColor(data.severity)}`}>
-          Severity: {data.severity.toUpperCase()}
+          Severity: {(data.severity || 'moderate').toUpperCase()}
         </span>
       </div>
       
