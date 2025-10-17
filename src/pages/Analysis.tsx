@@ -156,12 +156,15 @@ const Analysis = () => {
 
           <TabsContent value="problems" className="space-y-4">
             <h2 className="text-xl font-semibold mb-4">ปัญหาที่พบ</h2>
-            <p className="text-muted-foreground mb-4">
-              การวิเคราะห์และคำแนะนำที่ผ่าของคุณปัญหาผิว สิว และ จุดด่างดำ
+            <p className="text-muted-foreground mb-6">
+              การวิเคราะห์และคำแนะนำสำหรับปัญหาผิว สิว และ จุดด่างดำ
             </p>
-            {problems.map((problem, index) => (
-              <ProblemCard key={index} {...problem} />
-            ))}
+            
+            <div className="grid gap-4">
+              {problems.map((problem, index) => (
+                <ProblemCard key={`problem-${index}`} {...problem} />
+              ))}
+            </div>
 
             {problems.length === 0 && (
               <Card className="p-8 text-center">
