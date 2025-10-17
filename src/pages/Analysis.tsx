@@ -33,24 +33,27 @@ const Analysis = () => {
       : (typeof data.detectedIssues === 'string' ? [data.detectedIssues] : []);
 
     // Map detected issues to problem cards with details
-    const mappedProblems: ProblemDetail[] = issues.map((issue: string) => {
+    const mappedProblems: ProblemDetail[] = issues.map((issue: any) => {
+      // Convert issue to string to ensure we can use string methods
+      const issueStr = String(issue);
+      
       // Default problem structure
       const problemDetail: ProblemDetail = {
-        title: issue,
+        title: issueStr,
         severity: data.severity || 'moderate',
-        description: `พบปัญหา ${issue} บนใบหน้า`,
+        description: `พบปัญหา ${issueStr} บนใบหน้า`,
         possibleCauses: ['ฮอร์โมน', 'ความเครียด', 'การทำความสะอาดไม่เพียงพอ'],
         treatments: ['ใช้ผลิตภัณฑ์ที่มี Salicylic Acid', 'หลีกเลี่ยงการสัมผัสใบหน้า', 'ทำความสะอาดหมอน 2 ครั้ง/สัปดาห์']
       };
 
       // Customize based on issue type
-      if (issue.includes('สิว') || issue.includes('acne')) {
+      if (issueStr.includes('สิว') || issueStr.includes('acne')) {
         problemDetail.possibleCauses = ['ฮอร์โมน', 'ความเครียด', 'การทำความสะอาดไม่เพียงพอ'];
         problemDetail.treatments = ['ใช้ผลิตภัณฑ์ที่มี Salicylic Acid', 'หลีกเลี่ยงการสัมผัสใบหน้า', 'ทำความสะอาดหมอนทุกสัปดาห์'];
-      } else if (issue.includes('รอยดำ') || issue.includes('hyperpigmentation')) {
+      } else if (issueStr.includes('รอยดำ') || issueStr.includes('hyperpigmentation')) {
         problemDetail.possibleCauses = ['รอยแดงเป็นรอยดำ', 'การอักเสบผิวแดด'];
         problemDetail.treatments = ['ใช้ครีมกันแดดทุกวัน', 'ใช้ผลิตภัณฑ์ที่มี Vitamin C', 'พิจารณาการทำ Chemical Peel'];
-      } else if (issue.includes('ตุ่ม') || issue.includes('Pustules')) {
+      } else if (issueStr.includes('ตุ่ม') || issueStr.includes('Pustules')) {
         problemDetail.possibleCauses = ['เชื้อแบคทีเรีย', 'การอุดตันของรูขุมขน'];
         problemDetail.treatments = ['ใช้ครีมที่มีแอนติบาคทีเรีย', 'หลีกเลี่ยงการบีบหรือเกาตุ่ม'];
       }
