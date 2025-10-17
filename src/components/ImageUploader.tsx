@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
@@ -34,6 +35,7 @@ type SupabaseUploadResponse = {
 };
 
 const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
+  const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -92,12 +94,19 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
           if (response.ok) {
             const responseData = await response.json();
-            if (responseData && responseData.length > 0) {
-              setSkinAnalysis(responseData[0]);
+            if (responseData) {
+              setSkinAnalysis(responseData);
               if (onAnalysisComplete) {
-                onAnalysisComplete(responseData[0]);
+                onAnalysisComplete(responseData);
               }
               toast.success('Skin analysis completed!');
+              // Navigate to analysis page
+              navigate('/analysis', { 
+                state: { 
+                  data: responseData, 
+                  imageUrl: urlData.publicUrl 
+                } 
+              });
             } else {
               toast.error('No analysis data received');
             }
@@ -412,9 +421,6 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
             </Card>
           )}
 
-          {skinAnalysis && (
-            <SkinAnalysisResult data={skinAnalysis} />
-          )}
         </>
       )}
     </div>
