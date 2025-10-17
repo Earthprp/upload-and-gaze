@@ -27,8 +27,13 @@ const Analysis = () => {
       return;
     }
 
+    // Ensure detectedIssues exists and is an array
+    const issues = Array.isArray(data.detectedIssues) 
+      ? data.detectedIssues 
+      : (typeof data.detectedIssues === 'string' ? [data.detectedIssues] : []);
+
     // Map detected issues to problem cards with details
-    const mappedProblems: ProblemDetail[] = data.detectedIssues.map((issue: string) => {
+    const mappedProblems: ProblemDetail[] = issues.map((issue: string) => {
       // Default problem structure
       const problemDetail: ProblemDetail = {
         title: issue,
