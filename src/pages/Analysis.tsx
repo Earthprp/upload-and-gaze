@@ -4,7 +4,7 @@ import { Result } from "@/components/Result";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, Clock } from "lucide-react";
+import { ArrowLeft, User, Clock, Sun, Moon, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface ProblemDetail {
@@ -173,17 +173,135 @@ const Analysis = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="recommendations">
-            <Card className="p-6">
-              <h3 className="text-xl font-semibold mb-4">สรุปและคำแนะนำเพิ่มเติม</h3>
-              <ul className="space-y-3">
-                {data.skincareRecommendations.map((rec: string, index: number) => (
-                  <li key={index} className="flex gap-3">
-                    <span className="font-bold text-primary min-w-[1.5rem]">{index + 1}.</span>
-                    <span className="text-sm leading-relaxed flex-1">{rec}</span>
-                  </li>
+          <TabsContent value="recommendations" className="space-y-6">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2">การดูแลและรักษา</h2>
+              <p className="text-sm text-muted-foreground">
+                ขั้นตอนการดูแลผิวประจำวันและคำแนะนำการใช้ชีวิต
+              </p>
+            </div>
+
+            {/* Morning Routine */}
+            <Card className="p-6 bg-yellow-50/50 dark:bg-yellow-950/20 border-yellow-200/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Sun className="w-5 h-5 text-yellow-600" />
+                <h3 className="text-lg font-semibold">ขั้นตอนเช้า</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { step: 1, title: "ล้างหน้าด้วยโฟมล้างหน้า", product: "Gentle Cleanser", time: "1-2 นาที" },
+                  { step: 2, title: "ใช้โทนเนอร์ปรับสมดุลผิว", product: "Balancing Toner", time: "30 วินาที" },
+                  { step: 3, title: "ทา Vitamin C Serum", product: "Antioxidant Serum", time: "1 นาที" },
+                  { step: 4, title: "ทาครีมบำรุงผิว", product: "Moisturizer", time: "1 นาที" },
+                  { step: 5, title: "ทาครีมกันแดด SPF 30+", product: "Sunscreen", time: "1 นาที" }
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3 p-3 bg-white/70 dark:bg-background/50 rounded-lg">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-semibold flex-shrink-0">
+                      {item.step}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm mb-1">{item.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{item.product}</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {item.time}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            </Card>
+
+            {/* Evening Routine */}
+            <Card className="p-6 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Moon className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold">ขั้นตอนเย็น</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { step: 1, title: "ล้างเครื่องสำอาง (ถ้ามี)", product: "Makeup Remover", time: "2 นาที" },
+                  { step: 2, title: "ล้างหน้าด้วยโฟมทำความสะอาด", product: "Deep Cleanser", time: "2 นาที" },
+                  { step: 3, title: "ใช้ BHA (พันธนาที)", product: "Salicylic Acid", time: "คู่คำ 10 นาที" },
+                  { step: 4, title: "ทาครีมบำรุงผิวกลางคืน", product: "Night Moisturizer", time: "1 นาที" }
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3 p-3 bg-white/70 dark:bg-background/50 rounded-lg">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm font-semibold flex-shrink-0">
+                      {item.step}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm mb-1">{item.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{item.product}</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {item.time}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Lifestyle Recommendations */}
+            <Card className="p-6 bg-green-50/50 dark:bg-green-950/20 border-green-200/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Check className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold">คำแนะนำการใช้ชีวิต</h3>
+              </div>
+              <div className="grid md:grid-cols-2 gap-3">
+                {[
+                  "ดื่มน้ำอย่างน้อย 8 แก้วต่อวัน",
+                  "นอนหลับพักผ่อนให้เพียงพอ 7-8 ชั่วโมง",
+                  "หลีกเลี่ยงอาหารทอด ของหวาน และนมมากเกินไป",
+                  "ออกกำลังกายอย่างสม่ำเสมอ",
+                  "จัดการความเครียดด้วยสมาธิหรือโยคะ"
+                ].map((tip, index) => (
+                  <div key={index} className="flex items-start gap-2 p-3 bg-white/70 dark:bg-background/50 rounded-lg">
+                    <Check className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">{tip}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Weekly Schedule */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-5 h-5" />
+                <h3 className="text-lg font-semibold">ตารางเลือกใช้</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      {["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"].map((day) => (
+                        <th key={day} className="p-2 text-center font-medium">{day}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                        <td key={day} className="p-2">
+                          <div className="space-y-1">
+                            <div className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded text-center">
+                              เช้า: ปกติ
+                            </div>
+                            <div className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-center">
+                              {day % 2 === 0 ? "เย็น: ปกติ" : "เย็น: BHA"}
+                            </div>
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </Card>
           </TabsContent>
 
