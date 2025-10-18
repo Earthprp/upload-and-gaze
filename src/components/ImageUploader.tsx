@@ -77,6 +77,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
         try {
           setIsAnalyzing(true);
+          //const base64Image = await convertFileToBase64(file);
           const response = await fetch('https://earthprp.app.n8n.cloud/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -87,6 +88,8 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
                 fullPath: data.fullPath
               },
               public_url: urlData.publicUrl,
+              //base64_input: base64Image,
+              //inputs: base64Image,
               file_path: filePath,
               timestamp: new Date().toISOString()
             })
