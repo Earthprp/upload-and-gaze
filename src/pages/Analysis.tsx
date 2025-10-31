@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, Clock, Sun, Moon, Check } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+
 interface ProblemDetail {
   title: string;
   severity: 'mild' | 'moderate' | 'severe';
@@ -51,7 +52,8 @@ const mapSeverity = (s: string): 'mild' | 'moderate' | 'severe' => {
 const Analysis = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data, imageUrl } = location.state || {};
+  const { data, imageUrl, annotatedImage } = location.state || {};
+  //const { data, imageUrl } = location.state || {};
   const [problems, setProblems] = useState<ProblemDetail[]>([]);
 
   // ป้องกันกรณี data ไม่มี ให้ redirect กลับหน้าแรก
@@ -169,15 +171,15 @@ const Analysis = () => {
             <div>
               <h3 className="text-sm font-medium text-muted-foreground mb-2">Detected</h3>
               <div className="relative rounded-lg overflow-hidden border-2 border-border bg-muted aspect-square">
-                {imageUrl ? (
+                {annotatedImage ? (
                   <img
-                    src={imageUrl}
+                    src={annotatedImage}
                     alt="Detected"
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    No image available
+                    No annotated image available
                   </div>
                 )}
               </div>

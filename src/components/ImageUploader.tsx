@@ -71,54 +71,138 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         .from('skin_image')
         .getPublicUrl(filePath);
 
-      if (urlData) {
+  //     if (urlData) {
+  //       setSelectedImage(urlData.publicUrl);
+  //       toast.success("Image uploaded successfully!");
+
+  //       try {
+  //         setIsAnalyzing(true);
+  //         //const base64Image = await convertFileToBase64(file);
+  //         const response = await fetch('https://earthprp.app.n8n.cloud/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99', {
+  //           method: 'POST',
+  //           headers: {'Content-Type': 'application/json'},
+  //           body: JSON.stringify({
+  //             upload_data: {
+  //               path: data.path,
+  //               id: data.id,
+  //               fullPath: data.fullPath
+  //             },
+  //             public_url: urlData.publicUrl,
+  //             //base64_input: base64Image,
+  //             //inputs: base64Image,
+  //             file_path: filePath,
+  //             timestamp: new Date().toISOString()
+  //           })
+  //         });
+
+  //         if (response.ok) {
+  //           const responseData = await response.json();
+  //           if (responseData) {
+  //             setSkinAnalysis(responseData);
+  //             if (onAnalysisComplete) {
+  //               onAnalysisComplete(responseData);
+  //             }
+  //             toast.success('Skin analysis completed!');
+  //             // Navigate to analysis page
+  //             navigate('/analysis', { 
+  //               state: { 
+  //                 data: responseData, 
+  //                 imageUrl: urlData.publicUrl 
+  //               } 
+  //             });
+  //           } else {
+  //             toast.error('No analysis data received');
+  //           }
+  //         } else {
+  //           toast.error(`Analysis failed (${response.status})`);
+  //         }
+  //       } catch (error) {  
+  //         console.error('Webhook error:', error);
+  //         toast.error('Error during analysis');
+  //       } finally {
+  //         setIsAnalyzing(false);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Upload error:', error);
+  //     toast.error(error instanceof Error ? error.message : "Failed to upload image to Supabase");
+  //   } finally {
+  //     setIsUploading(false);
+  //     setUploadProgress(0);
+  //   }
+  // };
+        if (urlData) {
         setSelectedImage(urlData.publicUrl);
         toast.success("Image uploaded successfully!");
 
         try {
           setIsAnalyzing(true);
-          //const base64Image = await convertFileToBase64(file);
-          const response = await fetch('https://earthprp.app.n8n.cloud/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              upload_data: {
-                path: data.path,
-                id: data.id,
-                fullPath: data.fullPath
-              },
-              public_url: urlData.publicUrl,
-              //base64_input: base64Image,
-              //inputs: base64Image,
-              file_path: filePath,
-              timestamp: new Date().toISOString()
-            })
+
+          // 🔹 1. เรียก n8n webhook เพื่อวิเคราะห์สภาพผิว
+          const n8nResponse = await fetch(
+            "http://localhost:5678/webhook-test/f835b9ca-db4e-4e5b-ad56-68e544f5ae99",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                upload_data: {
+                  path: data.path,
+                  id: data.id,
+                  fullPath: data.fullPath,
+                },
+                public_url: urlData.publicUrl,
+                file_path: filePath,
+                timestamp: new Date().toISOString(),
+              }),
+            }
+          );
+
+          if (!n8nResponse.ok) {
+            throw new Error(`n8n analysis failed (${n8nResponse.status})`);
+          }
+
+          const n8nData = await n8nResponse.json();
+          console.log("✅ n8n result:", n8nData);
+
+          // 🔹 2. เรียก FastAPI /api/detect-skin เพื่อวาดกรอบจาก Supabase
+          const formData = new FormData();
+          formData.append("file_path", filePath);
+          formData.append("threshold", "0.03");
+
+          const detectResponse = await fetch("http://localhost:8000/api/detect-skin", {
+            method: "POST",
+            body: formData,
           });
 
-          if (response.ok) {
-            const responseData = await response.json();
-            if (responseData) {
-              setSkinAnalysis(responseData);
-              if (onAnalysisComplete) {
-                onAnalysisComplete(responseData);
-              }
-              toast.success('Skin analysis completed!');
-              // Navigate to analysis page
-              navigate('/analysis', { 
-                state: { 
-                  data: responseData, 
-                  imageUrl: urlData.publicUrl 
-                } 
-              });
-            } else {
-              toast.error('No analysis data received');
-            }
-          } else {
-            toast.error(`Analysis failed (${response.status})`);
+          const detectResult = await detectResponse.json();
+          console.log("🎯 Detection result:", detectResult);
+
+          if (detectResult.status !== "success") {
+            toast.error("Skin detection failed");
+            return;
           }
+
+          // 🔹 3. รวมผลทั้งสองฝั่ง (n8n + Roboflow)
+          const combinedResult = {
+            ...n8nData,
+            annotated_image_base64: detectResult.annotated_image_base64,
+            roboflow_predictions: detectResult.predictions,
+          };
+
+          toast.success("Skin analysis + detection completed!");
+
+          // 🔹 4. Navigate ไปหน้า /analysis พร้อมส่งผล
+          navigate("/analysis", {
+            state: {
+              data: combinedResult,
+              imageUrl: urlData.publicUrl, // original
+              annotatedImage: detectResult.annotated_image_base64, // มีกรอบ
+            },
+          });
+
         } catch (error) {
-          console.error('Webhook error:', error);
-          toast.error('Error during analysis');
+          console.error("❌ Error in analysis flow:", error);
+          toast.error("Error during analysis process");
         } finally {
           setIsAnalyzing(false);
         }
