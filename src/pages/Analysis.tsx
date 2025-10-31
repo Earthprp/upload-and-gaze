@@ -27,6 +27,12 @@ type AnalysisData = {
     recommendedSolutions: string[];
   }>;
   detectionCounts?: number;
+  acneTotalCount?: number;
+  otherSkinIssuesCount?: number;
+  overallScore?: number;
+  oilinessLevel?: number;
+  hydrationLevel?: number;
+  toneEvenness?: number;
   skincareRecommendations?: string[];
   productRecommendations?: {
     cleanser?: string;
@@ -114,27 +120,11 @@ const Analysis = () => {
   );
 
   // เตรียมข้อมูลจาก JSON สำหรับแท็บ recommendations
-  const morningSteps = analysis.dailyRoutines?.morningRoutine ?? [
-    "ล้างหน้าด้วยเจลล้างหน้าที่อ่อนโยน",
-    "ทาเซรั่มที่มี Niacinamide (ถ้าใช้)",
-    "ลงมอยส์เจอไรเซอร์เนื้อบางเบา",
-    "ทาครีมกันแดด SPF50+ PA+++"
-  ];
+  const morningSteps = analysis.dailyRoutines?.morningRoutine ?? [];
 
-  const nightSteps = analysis.dailyRoutines?.nightRoutine ?? [
-    "ล้างเครื่องสำอางด้วยคลีนซิ่งออยล์หรือบาล์ม (หากแต่งหน้าหรือทาครีมกันแดด)",
-    "ล้างหน้าซ้ำด้วยคลีนเซอร์ที่มี BHA",
-    "ทาเซรั่มรักษาสิว (เช่น Retinoid อ่อนๆ หรือ Niacinamide) หรือแต้มสิวเฉพาะจุดด้วย Benzoyl Peroxide",
-    "ทามอยส์เจอไรเซอร์ที่ให้ความชุ่มชื้นได้ดีขึ้นเพื่อการฟื้นฟูผิวในเวลากลางคืน"
-  ];
+  const nightSteps = analysis.dailyRoutines?.nightRoutine ?? [];
 
-  const lifestyleTips = analysis.skincareRecommendations ?? [
-    "ดื่มน้ำอย่างน้อย 8 แก้วต่อวัน",
-    "นอนหลับพักผ่อนให้เพียงพอ 7-8 ชั่วโมง",
-    "หลีกเลี่ยงอาหารทอด ของหวาน และนมมากเกินไป",
-    "ออกกำลังกายอย่างสม่ำเสมอ",
-    "จัดการความเครียดด้วยสมาธิหรือโยคะ"
-  ];
+  const lifestyleTips = analysis.skincareRecommendations ?? [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 py-8 px-4">
@@ -228,25 +218,25 @@ const Analysis = () => {
               <Card className="p-4 bg-primary/5 border-primary/20">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">สุขภาพผิวรวม</p>
-                  <p className="text-3xl font-bold text-primary">85%</p>
+                  <p className="text-3xl font-bold text-primary">{analysis.overallScore ?? 0}%</p>
                 </div>
               </Card>
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200/50">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">ความมัน</p>
-                  <p className="text-3xl font-bold text-blue-600">60%</p>
+                  <p className="text-3xl font-bold text-blue-600">{analysis.oilinessLevel ?? 0}%</p>
                 </div>
               </Card>
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200/50">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">ความชุ่มชื้น</p>
-                  <p className="text-3xl font-bold text-green-600">75%</p>
+                  <p className="text-3xl font-bold text-green-600">{analysis.hydrationLevel ?? 0}%</p>
                 </div>
               </Card>
               <Card className="p-4 bg-purple-50 dark:bg-purple-950/20 border-purple-200/50">
                 <div className="text-center">
                   <p className="text-xs text-muted-foreground mb-1">ความสม่ำเสมอของสีผิว</p>
-                  <p className="text-3xl font-bold text-purple-600">70%</p>
+                  <p className="text-3xl font-bold text-purple-600">{analysis.toneEvenness ?? 0}%</p>
                 </div>
               </Card>
             </div>
