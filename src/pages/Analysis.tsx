@@ -223,6 +223,32 @@ const Analysis = () => {
           </TabsList>
 
           <TabsContent value="problems" className="space-y-4">
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <Card className="p-6 bg-primary/5 border-primary/20">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">จำนวนสิว</p>
+                  <p className="text-5xl font-bold text-primary">
+                    {problems.filter(p => 
+                      p.title.toLowerCase().includes('สิว') || 
+                      p.title.toLowerCase().includes('acne')
+                    ).length}
+                  </p>
+                </div>
+              </Card>
+              <Card className="p-6 bg-green-50 dark:bg-green-950/20 border-green-200/50">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">จำนวนปัญหาผิวอื่น ๆ</p>
+                  <p className="text-5xl font-bold text-green-600">
+                    {problems.filter(p => 
+                      !p.title.toLowerCase().includes('สิว') && 
+                      !p.title.toLowerCase().includes('acne')
+                    ).length}
+                  </p>
+                </div>
+              </Card>
+            </div>
+
             <h2 className="text-xl font-semibold mb-2">ปัญหาที่พบ ({analysis.detectionCounts ?? problems.length})</h2>
             <p className="text-muted-foreground mb-6">
               การวิเคราะห์และคำแนะนำสำหรับปัญหาผิวตามภาพล่าสุด
