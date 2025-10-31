@@ -224,27 +224,29 @@ const Analysis = () => {
 
           <TabsContent value="problems" className="space-y-4">
             {/* Stat Cards */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <Card className="p-6 bg-primary/5 border-primary/20">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <Card className="p-4 bg-primary/5 border-primary/20">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">จำนวนสิว</p>
-                  <p className="text-5xl font-bold text-primary">
-                    {problems.filter(p => 
-                      p.title.toLowerCase().includes('สิว') || 
-                      p.title.toLowerCase().includes('acne')
-                    ).length}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1">สุขภาพผิวรวม</p>
+                  <p className="text-3xl font-bold text-primary">85%</p>
                 </div>
               </Card>
-              <Card className="p-6 bg-green-50 dark:bg-green-950/20 border-green-200/50">
+              <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200/50">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">จำนวนปัญหาผิวอื่น ๆ</p>
-                  <p className="text-5xl font-bold text-green-600">
-                    {problems.filter(p => 
-                      !p.title.toLowerCase().includes('สิว') && 
-                      !p.title.toLowerCase().includes('acne')
-                    ).length}
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-1">ความมัน</p>
+                  <p className="text-3xl font-bold text-blue-600">60%</p>
+                </div>
+              </Card>
+              <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200/50">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1">ความชุ่มชื้น</p>
+                  <p className="text-3xl font-bold text-green-600">75%</p>
+                </div>
+              </Card>
+              <Card className="p-4 bg-purple-50 dark:bg-purple-950/20 border-purple-200/50">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground mb-1">ความสม่ำเสมอของสีผิว</p>
+                  <p className="text-3xl font-bold text-purple-600">70%</p>
                 </div>
               </Card>
             </div>
