@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, Clock, Sun, Moon, Check } from "lucide-react";
+import { ArrowLeft, User, Clock, Sun, Moon, Check, History as HistoryIcon } from "lucide-react";
 
 
 interface ProblemDetail {
@@ -151,14 +151,22 @@ const Analysis = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="mb-6"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          กลับหน้าแรก
-        </Button>
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            กลับหน้าแรก
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/history')}
+          >
+            <HistoryIcon className="w-4 h-4 mr-2" />
+            View History
+          </Button>
+        </div>
 
         {/* Analysis Images Section */}
         <Card className="p-6 mb-6 shadow-lg">
