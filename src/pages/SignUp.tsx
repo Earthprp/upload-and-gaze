@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
+import supabase from "@/lib/supabase";
+
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -14,11 +16,44 @@ const SignUp = () => {
     password: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle sign up logic here
-    console.log("Sign up:", formData);
-  };
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   // Handle sign up logic here
+  //   console.log("Sign up:", formData);
+  // };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const { username, email, password } = formData;
+
+    // เรียก Supabase signUp
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: username, 
+       }, 
+      },
+    });
+
+    if (error) {
+      console.error("❌ Sign up error:", error.message);
+      alert(error.message);
+      return;
+    }
+
+    console.log("✅ Sign up success:", data);
+    alert("Sign up success! ");
+
+    // ไปหน้า Sign In
+    navigate("/signin");
+  } catch (err) {
+    console.error("Unexpected error:", err);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">

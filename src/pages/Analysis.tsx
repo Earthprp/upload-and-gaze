@@ -2,10 +2,11 @@ import { Card } from "@/components/ui/card";
 import { ProblemCard } from "@/components/ProblemCard";
 import { Result } from "@/components/Result";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, Clock, Sun, Moon, Check } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
 
 
 interface ProblemDetail {
@@ -58,6 +59,27 @@ const mapSeverity = (s: string): 'mild' | 'moderate' | 'severe' => {
 const Analysis = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check current user session
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
+
   const { data, imageUrl, annotatedImage } = location.state || {};
   //const { data, imageUrl } = location.state || {};
   const [problems, setProblems] = useState<ProblemDetail[]>([]);
@@ -186,7 +208,7 @@ const Analysis = () => {
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <User className="w-4 h-4" />
-              <span>ผู้เข้าชม: Guest</span>
+              <span>ผู้เข้าชม: {user ? (user.user_metadata?.display_name || user.email?.split('@')[0]) : 'Guest'}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
