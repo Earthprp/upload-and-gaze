@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  
   return (
     <nav className="w-full bg-background border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,10 +15,10 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button variant="ghost">
+            <Button variant="ghost" onClick={() => navigate("/signin")}>
               Sign In
             </Button>
-            <Button>
+            <Button onClick={() => navigate("/signup")}>
               Sign Up
             </Button>
           </div>
