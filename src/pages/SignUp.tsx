@@ -26,7 +26,7 @@ const SignUp = () => {
       <div className="flex items-center justify-center py-12 px-4">
         <Card className="w-full max-w-md p-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-blue-500 mb-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent mb-2">
               Create Account
             </h1>
             <p className="text-muted-foreground">
@@ -85,7 +85,7 @@ const SignUp = () => {
 
             <Button 
               type="submit" 
-              className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white text-base"
+              className="w-full h-12 text-base"
             >
               Sign Up
             </Button>
@@ -95,7 +95,7 @@ const SignUp = () => {
               <button
                 type="button"
                 onClick={() => navigate("/signin")}
-                className="text-blue-500 hover:underline font-medium"
+                className="text-primary hover:underline font-medium"
               >
                 Sign in
               </button>
