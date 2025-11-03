@@ -41,7 +41,7 @@ const Navbar = () => {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/');
+      navigate('/upload');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -53,7 +53,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">
             <h1 
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/upload")}
               className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent cursor-pointer"
             >
               SkinAI

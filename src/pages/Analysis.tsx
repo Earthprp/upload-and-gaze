@@ -3,7 +3,7 @@ import { ProblemCard } from "@/components/ProblemCard";
 import { Result } from "@/components/Result";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, Clock, Sun, Moon, Check, History as HistoryIcon } from "lucide-react";
@@ -83,11 +83,12 @@ const Analysis = () => {
   const { data, imageUrl, annotatedImage } = location.state || {};
   //const { data, imageUrl } = location.state || {};
   const [problems, setProblems] = useState<ProblemDetail[]>([]);
+  const hasSavedToHistoryRef = useRef(false);
 
   // ป้องกันกรณี data ไม่มี ให้ redirect กลับหน้าแรก
   useEffect(() => {
     if (!data) {
-      navigate('/');
+      navigate('/upload');
       return;
     }
 
@@ -117,6 +118,50 @@ const Analysis = () => {
 
     setProblems(mappedProblems);
   }, [data, navigate]);
+
+  // Save analysis data to Supabase (only once)
+  useEffect(() => {
+    const saveAnalysisToHistory = async () => {
+      // Only save if we have data, a logged-in user, and haven't saved yet
+      if (!data || !user || hasSavedToHistoryRef.current) return;
+
+      // Mark as saving immediately to prevent race conditions
+      hasSavedToHistoryRef.current = true;
+
+      const analysis: AnalysisData = data;
+
+      try {
+        const { error } = await supabase
+          .from('skin_analysis_history')
+          .insert({
+            user_id: user.id,
+            image_url: imageUrl || null,
+            skin_type: analysis.skinType || null,
+            overall_assessment: analysis.overallAssessment || null,
+            detection_counts: analysis.detectionCounts || null,
+            overall_score: analysis.overallScore || null,
+            oiliness_level: analysis.oilinessLevel || null,
+            hydration_level: analysis.hydrationLevel || null,
+            tone_evenness: analysis.toneEvenness || null,
+            overall_severity: analysis.overallSeverity || null,
+          });
+
+        if (error) {
+          console.error('Error saving analysis to history:', error);
+          // Reset flag on error so user can retry
+          hasSavedToHistoryRef.current = false;
+        } else {
+          console.log('Analysis saved to history successfully');
+        }
+      } catch (err) {
+        console.error('Unexpected error saving analysis:', err);
+        // Reset flag on error so user can retry
+        hasSavedToHistoryRef.current = false;
+      }
+    };
+
+    saveAnalysisToHistory();
+  }, [data, user, imageUrl]);
 
   if (!data) return null;
 
@@ -154,7 +199,7 @@ const Analysis = () => {
         <div className="flex justify-between items-center mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/upload')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             กลับหน้าแรก
