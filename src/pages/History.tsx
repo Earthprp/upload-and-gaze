@@ -214,9 +214,9 @@ const History = () => {
                     <Line 
                       type="monotone" 
                       dataKey="score" 
-                      stroke="hsl(var(--primary))" 
+                      stroke="hsl(142 76% 36%)" 
                       strokeWidth={2}
-                      dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      dot={{ fill: 'hsl(142 76% 36%)', r: 4 }}
                       activeDot={{ r: 6 }}
                       name="Skin Health"
                     />
