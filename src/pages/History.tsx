@@ -84,7 +84,10 @@ const History = () => {
   // Prepare chart data from history
   const chartData = historyData.slice(0, 10).reverse().map((record) => ({
     date: new Date(record.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    score: record.overall_score || 0
+    score: record.overall_score || 0,
+    hydration: record.hydration_level || 0,
+    oiliness: record.oiliness_level || 0,
+    tone: record.tone_evenness || 0
   }));
 
   // Show message for non-authenticated users
@@ -201,21 +204,48 @@ const History = () => {
                     <YAxis hide />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: 'hsl(var(--primary))',
-                        color: 'white',
-                        border: 'none',
+                        backgroundColor: 'hsl(var(--card))',
+                        color: 'hsl(var(--foreground))',
+                        border: '1px solid hsl(var(--border))',
                         borderRadius: '8px',
                         padding: '8px 12px'
                       }}
-                      formatter={(value: any) => [`${value}%`, 'Score']}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="score" 
                       stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--primary))', r: 6 }}
-                      activeDot={{ r: 8 }}
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name="Skin Health"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="hydration" 
+                      stroke="hsl(217 91% 60%)" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(217 91% 60%)', r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name="Hydration"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="oiliness" 
+                      stroke="hsl(45 93% 47%)" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(45 93% 47%)', r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name="Oiliness"
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="tone" 
+                      stroke="hsl(280 65% 60%)" 
+                      strokeWidth={2}
+                      dot={{ fill: 'hsl(280 65% 60%)', r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name="Tone Evenness"
                     />
                     </LineChart>
                   </ResponsiveContainer>
