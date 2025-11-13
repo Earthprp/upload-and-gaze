@@ -131,7 +131,7 @@ const Analysis = () => {
       const analysis: AnalysisData = data;
 
       try {
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from('skin_analysis_history')
           .insert({
             user_id: user.id,
@@ -144,7 +144,8 @@ const Analysis = () => {
             hydration_level: analysis.hydrationLevel || null,
             tone_evenness: analysis.toneEvenness || null,
             overall_severity: analysis.overallSeverity || null,
-          });
+          })
+          .select();
 
         if (error) {
           console.error('Error saving analysis to history:', error);
@@ -152,6 +153,7 @@ const Analysis = () => {
           hasSavedToHistoryRef.current = false;
         } else {
           console.log('Analysis saved to history successfully');
+          console.log('Inserted data:', insertedData);
         }
       } catch (err) {
         console.error('Unexpected error saving analysis:', err);
@@ -281,10 +283,10 @@ const Analysis = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="problems" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="problems">ปัญหา</TabsTrigger>
             <TabsTrigger value="recommendations">การดูแลและรักษา</TabsTrigger>
-            <TabsTrigger value="products">สกินแคร์และผลิตภัณฑ์</TabsTrigger>
+            {/* <TabsTrigger value="products">สกินแคร์และผลิตภัณฑ์</TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="problems" className="space-y-4">
@@ -436,10 +438,8 @@ const Analysis = () => {
           </TabsContent>
 
           {/* Products/สถิตผิวและผลิตภัณฑ์ */}
-          <TabsContent value="products">
-            {/* ส่ง data ตรงๆ เข้า <Result /> ตามเดิม */}
+          {/* <TabsContent value="products">
             <Result data={data} />
-            {/* ถ้าต้องการแสดงสรุปผลิตภัณฑ์ด้วย สามารถดึงจาก analysis.productRecommendations ได้ */}
             {analysis.productRecommendations && (
               <div className="grid md:grid-cols-2 gap-4 mt-6">
                 <Card className="p-4">
@@ -460,7 +460,7 @@ const Analysis = () => {
                 </Card>
               </div>
             )}
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
     </div>

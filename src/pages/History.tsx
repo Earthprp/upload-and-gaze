@@ -271,8 +271,10 @@ const History = () => {
                   <p className="text-3xl font-bold text-green-600">{selectedRecord?.tone_evenness || 0}%</p>
                 </div>
                 <div className="col-span-2">
-                  <h3 className="text-lg font-semibold mb-2">Skin Type</h3>
-                  <p className="text-xl font-semibold">{selectedRecord?.skin_type || 'N/A'}</p>
+                  <h3 className="text-lg font-semibold mb-2">Overall Assessment</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {selectedRecord?.overall_assessment || 'No assessment available'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -461,8 +463,10 @@ const History = () => {
                         })}
                       </td>
                       <td className="py-4 px-4 font-semibold">{record.overall_score || 0}%</td>
-                      <td className="py-4 px-4 text-muted-foreground">
-                        {record.skin_type || 'N/A'} • {record.detection_counts || 0} issues
+                      <td className="py-4 px-4 text-muted-foreground max-w-md">
+                        <div className="line-clamp-2">
+                          {record.overall_assessment || 'No assessment available'}
+                        </div>
                       </td>
                       <td className="py-4 px-4">
                         <Button 
