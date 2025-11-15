@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import supabase from "@/lib/supabase";
 
@@ -13,7 +14,9 @@ const SignUp = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
-    password: ""
+    password: "",
+    age: "",
+    gender: ""
   });
 
   // const handleSubmit = (e: React.FormEvent) => {
@@ -25,7 +28,7 @@ const SignUp = () => {
   e.preventDefault();
 
   try {
-    const { username, email, password } = formData;
+    const { username, email, password, age, gender } = formData;
 
     // เรียก Supabase signUp
     const { data, error } = await supabase.auth.signUp({
@@ -33,7 +36,9 @@ const SignUp = () => {
       password,
       options: {
         data: {
-          display_name: username, 
+          display_name: username,
+          age: age,
+          gender: gender,
        }, 
       },
     });
@@ -116,6 +121,40 @@ const SignUp = () => {
               <p className="text-sm text-muted-foreground">
                 Must contain 8+ characters with uppercase, lowercase, and number
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="age" className="text-base font-semibold">
+                Age
+              </Label>
+              <Input
+                id="age"
+                type="number"
+                placeholder="25"
+                value={formData.age}
+                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                className="h-12"
+                required
+                min="1"
+                max="120"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gender" className="text-base font-semibold">
+                Gender
+              </Label>
+              <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })} required>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button 
