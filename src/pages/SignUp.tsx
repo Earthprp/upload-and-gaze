@@ -50,6 +50,25 @@ const SignUp = () => {
     }
 
     console.log("✅ Sign up success:", data);
+
+    // Insert age and gender to profiles table when user signs up
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          age: parseInt(age) || null,
+          gender: gender || null,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (profileError) {
+        console.error("❌ Failed to save age and gender:", profileError.message);
+      } else {
+        console.log("✅ Age and gender saved successfully");
+      }
+    }
+
     alert("Sign up success! ");
 
     // ไปหน้า Sign In

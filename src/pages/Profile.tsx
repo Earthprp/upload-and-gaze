@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -15,6 +16,8 @@ const Profile = () => {
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,6 +29,20 @@ const Profile = () => {
         setUser(user);
         setEmail(user.email || "");
         setUsername(user.user_metadata?.display_name || user.email?.split('@')[0] || "");
+        setAge(user.user_metadata?.age || "");
+        setGender(user.user_metadata?.gender || "");
+
+        // Also fetch from profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('age, gender')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setAge(profile.age?.toString() || "");
+          setGender(profile.gender || "");
+        }
       }
     };
     getUser();
@@ -34,11 +51,30 @@ const Profile = () => {
   const handleSaveChanges = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: { display_name: username }
+      // Update auth user metadata
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { 
+          display_name: username,
+          age: age,
+          gender: gender
+        }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // Update profiles table
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            age: parseInt(age) || null,
+            gender: gender || null,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (profileError) throw profileError;
+      }
       
       toast.success("Profile updated successfully");
     } catch (error: any) {
@@ -127,6 +163,39 @@ const Profile = () => {
                 disabled
                 className="h-12 text-base bg-muted"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="age" className="text-base">
+                Age
+              </Label>
+              <Input
+                id="age"
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Enter your age"
+                className="h-12 text-base"
+                min="1"
+                max="120"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gender" className="text-base">
+                Gender
+              </Label>
+              <Select value={gender} onValueChange={setGender}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
