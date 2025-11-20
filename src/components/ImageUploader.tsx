@@ -6,6 +6,72 @@ import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import supabase from "@/lib/supabase";
 
+// Function to resize image to max 1024x768 while maintaining aspect ratio
+const resizeImage = (file: File): Promise<File> => {
+  return new Promise((resolve) => {
+    const MAX_WIDTH = 1024;
+    const MAX_HEIGHT = 768;
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Calculate new dimensions while maintaining aspect ratio
+      const aspectRatio = width / height;
+      
+      if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+        if (aspectRatio > MAX_WIDTH / MAX_HEIGHT) {
+          // Width is the limiting factor
+          width = MAX_WIDTH;
+          height = Math.round(MAX_WIDTH / aspectRatio);
+        } else {
+          // Height is the limiting factor
+          height = MAX_HEIGHT;
+          width = Math.round(MAX_HEIGHT * aspectRatio);
+        }
+      }
+
+      // Create canvas and draw resized image
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // Use better image scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to blob and create new file
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const resizedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            URL.revokeObjectURL(url);
+            resolve(resizedFile);
+          } else {
+            URL.revokeObjectURL(url);
+            resolve(file); // Fallback to original
+          }
+        }, 'image/jpeg', 0.9);
+      } else {
+        URL.revokeObjectURL(url);
+        resolve(file); // Fallback to original
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file); // Fallback to original
+    };
+
+    img.src = url;
+  });
+};
 
 interface SkinAnalysisData {
   skinType: string;
@@ -37,6 +103,8 @@ type SupabaseUploadResponse = {
 const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [annotatedImage, setAnnotatedImage] = useState<string | null>(null);
+  const [showAnnotated, setShowAnnotated] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -137,11 +205,35 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
         try {
           setIsAnalyzing(true);
+          toast.info("Analyzing skin...");
 
-          // 🔹 1. เรียก n8n webhook เพื่อวิเคราะห์สภาพผิว
-          const n8nResponse = await fetch(
-            "http://localhost:5678/webhook-test/f835b9ca-db4e-4e5b-ad56-68e544f5ae99",
-            {
+          // 🔹 Fetch user profile data (age and gender)
+          let userAge = null;
+          let userGender = null;
+          
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('age, gender')
+              .eq('id', user.id)
+              .single();
+            
+            if (profile) {
+              userAge = profile.age;
+              userGender = profile.gender;
+            }
+          }
+
+          // 🔹 Prepare both requests
+          const formData = new FormData();
+          formData.append("file_path", filePath);
+          formData.append("threshold", "0.03");
+
+          // 🔹 Run n8n webhook and FastAPI detection in PARALLEL ⚡
+          const [n8nResponse, detectResponse] = await Promise.all([
+            // 1. n8n webhook for skin analysis
+            fetch("http://localhost:5678/webhook-test/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -152,29 +244,30 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
                 },
                 public_url: urlData.publicUrl,
                 file_path: filePath,
+                age: userAge,
+                gender: userGender,
                 timestamp: new Date().toISOString(),
               }),
-            }
-          );
+            }),
+            // 2. FastAPI for skin detection (runs simultaneously)
+            fetch("http://localhost:8000/api/detect-skin", {
+              method: "POST",
+              body: formData,
+            })
+          ]);
 
+          // Check n8n response
           if (!n8nResponse.ok) {
             throw new Error(`n8n analysis failed (${n8nResponse.status})`);
           }
 
-          const n8nData = await n8nResponse.json();
+          // Parse both responses
+          const [n8nData, detectResult] = await Promise.all([
+            n8nResponse.json(),
+            detectResponse.json()
+          ]);
+
           console.log("✅ n8n result:", n8nData);
-
-          // 🔹 2. เรียก FastAPI /api/detect-skin เพื่อวาดกรอบจาก Supabase
-          const formData = new FormData();
-          formData.append("file_path", filePath);
-          formData.append("threshold", "0.03");
-
-          const detectResponse = await fetch("http://localhost:8000/api/detect-skin", {
-            method: "POST",
-            body: formData,
-          });
-
-          const detectResult = await detectResponse.json();
           console.log("🎯 Detection result:", detectResult);
 
           if (detectResult.status !== "success") {
@@ -182,7 +275,12 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
             return;
           }
 
-          // 🔹 3. รวมผลทั้งสองฝั่ง (n8n + Roboflow)
+          // 🔹 Store annotated image for preview
+          if (detectResult.annotated_image_base64) {
+            setAnnotatedImage(`data:image/jpeg;base64,${detectResult.annotated_image_base64}`);
+          }
+
+          // 🔹 Combine results from both APIs
           const combinedResult = {
             ...n8nData,
             annotated_image_base64: detectResult.annotated_image_base64,
@@ -191,12 +289,12 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
           toast.success("Skin analysis + detection completed!");
 
-          // 🔹 4. Navigate ไปหน้า /analysis พร้อมส่งผล
+          // 🔹 Navigate to analysis page with results
           navigate("/analysis", {
             state: {
               data: combinedResult,
               imageUrl: urlData.publicUrl, // original
-              annotatedImage: detectResult.annotated_image_base64, // มีกรอบ
+              annotatedImage: detectResult.annotated_image_base64, // with bounding boxes
             },
           });
 
@@ -216,13 +314,25 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
     }
   };
 
-  const handleImageSelect = (file: File) => {
+  const handleImageSelect = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    uploadToSupabase(file);
+    try {
+      toast.info("Resizing image...");
+      
+      // Resize the image before uploading
+      const resizedFile = await resizeImage(file);
+      
+      // Upload the resized image
+      await uploadToSupabase(resizedFile);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast.error('Failed to process image');
+      setIsUploading(false);
+    }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,6 +364,8 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
   const handleClearImage = () => {
     setSelectedImage(null);
+    setAnnotatedImage(null);
+    setShowAnnotated(false);
     setSkinAnalysis(null);
     setIsAnalyzing(false);
     setUploadProgress(0);
@@ -329,7 +441,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-foreground">
-                  Preview
+                  {showAnnotated && annotatedImage ? "Detected Skin" : "Preview"}
                 </h3>
                 <Button
                   variant="ghost"
@@ -343,11 +455,32 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
               <div className="relative rounded-lg overflow-hidden bg-muted">
                 <img
-                  src={selectedImage}
-                  alt="Preview"
+                  src={showAnnotated && annotatedImage ? annotatedImage : selectedImage}
+                  alt={showAnnotated && annotatedImage ? "Detected Skin" : "Preview"}
                   className="w-full h-auto max-h-[600px] object-contain"
                 />
+                {isAnalyzing && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <Loader2 className="w-12 h-12 mx-auto mb-2 animate-spin" />
+                      <p>Analyzing skin...</p>
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Toggle button for annotated image */}
+              {annotatedImage && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAnnotated(!showAnnotated)}
+                    className="w-full max-w-xs"
+                  >
+                    {showAnnotated ? "Show Original" : "Show Detected Skin"}
+                  </Button>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button

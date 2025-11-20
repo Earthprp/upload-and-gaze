@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { ProblemCard } from "@/components/ProblemCard";
 import { Result } from "@/components/Result";
+import Disclaimer from "@/components/Disclaimer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState, useRef } from "react";
@@ -462,6 +463,10 @@ const Analysis = () => {
             )}
           </TabsContent> */}
         </Tabs>
+
+        <div className="mt-8">
+          <Disclaimer />
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Disclaimer from "@/components/Disclaimer";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
@@ -488,6 +489,10 @@ const History = () => {
             </table>
           </div>
         </Card>
+
+        <div className="mt-8">
+          <Disclaimer />
+        </div>
       </div>
     </div>
   );

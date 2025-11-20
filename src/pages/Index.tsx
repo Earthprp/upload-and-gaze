@@ -1,6 +1,7 @@
 import ImageUploader from "@/components/ImageUploader";
 import { Result } from "@/components/Result";
 import Navbar from "@/components/Navbar";
+import Disclaimer from "@/components/Disclaimer";
 import { Button } from "@/components/ui/button";
 import { History } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -56,6 +57,10 @@ const Index = () => {
         <ImageUploader onAnalysisComplete={setAnalysisData} />
         
         {analysisData && <Result data={analysisData} />}
+
+        <div className="mt-8">
+          <Disclaimer />
+        </div>
       </div>
     </div>
     </div>

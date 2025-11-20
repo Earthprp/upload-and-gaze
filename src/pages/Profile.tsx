@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import Disclaimer from "@/components/Disclaimer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -285,6 +286,10 @@ const Profile = () => {
             </Card>
           </div>
         )}
+
+        <div className="mt-8">
+          <Disclaimer />
+        </div>
       </div>
     </div>
   );
