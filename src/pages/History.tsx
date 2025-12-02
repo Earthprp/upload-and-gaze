@@ -176,7 +176,7 @@ const History = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold">
-                  {selectedRecord?.id === latestRecord?.id ? 'Latest Analysis' : 'Selected Analysis'}
+                  Latest Analysis
                 </h2>
                 {/* <div className="flex items-center gap-2">
                   <span className="text-3xl font-bold text-primary">
@@ -262,29 +262,29 @@ const History = () => {
 
               {/* Metrics */}
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Skin Health</h3>
-                  <p className="text-3xl font-bold text-green-600">{selectedRecord?.overall_score || 0}%</p>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Skin Health</h3>
+                    <p className="text-3xl font-bold" style={{ color: 'hsl(142 76% 36%)' }}>{latestRecord?.overall_score || 0}%</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Hydration</h3>
+                    <p className="text-3xl font-bold" style={{ color: 'hsl(217 91% 60%)' }}>{latestRecord?.hydration_level || 0}%</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Oiliness</h3>
+                    <p className="text-3xl font-bold" style={{ color: 'hsl(45 93% 47%)' }}>{latestRecord?.oiliness_level || 0}%</p>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Tone Evenness</h3>
+                    <p className="text-3xl font-bold" style={{ color: 'hsl(280 65% 60%)' }}>{latestRecord?.tone_evenness || 0}%</p>
+                  </div>
+                  <div className="col-span-2">
+                    <h3 className="text-lg font-semibold mb-2">Overall Assessment</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {latestRecord?.overall_assessment || 'No assessment available'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Hydration</h3>
-                  <p className="text-3xl font-bold text-green-600">{selectedRecord?.hydration_level || 0}%</p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Oiliness</h3>
-                  <p className="text-3xl font-bold text-green-600">{selectedRecord?.oiliness_level || 0}%</p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Tone Evenness</h3>
-                  <p className="text-3xl font-bold text-green-600">{selectedRecord?.tone_evenness || 0}%</p>
-                </div>
-                <div className="col-span-2">
-                  <h3 className="text-lg font-semibold mb-2">Overall Assessment</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {selectedRecord?.overall_assessment || 'No assessment available'}
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* Right Side - Image Comparison */}
@@ -351,7 +351,7 @@ const History = () => {
 
                   {/* Selected Image */}
                   <div>
-                    <p className="text-sm font-semibold mb-2 text-green-600">Selected</p>
+                    <p className="text-sm font-semibold mb-2 text-pink-600">Selected</p>
                     {selectedRecord?.image_url ? (
                       <div className="relative rounded-lg overflow-hidden bg-muted aspect-[3/4]">
                         <img 
@@ -396,12 +396,12 @@ const History = () => {
                       <TableRow className="border-b border-border/30">
                         <TableCell className="font-medium">Skin Health</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {latestRecord.overall_score || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {selectedRecord.overall_score || 0}%
                           </span>
                         </TableCell>
@@ -409,8 +409,7 @@ const History = () => {
                           {(() => {
                             const diff = (latestRecord.overall_score || 0) - (selectedRecord.overall_score || 0);
                             return (
-                              <span className={`inline-flex items-center gap-1 font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                {diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                              <span className={`font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                                 {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
                               </span>
                             );
@@ -422,12 +421,12 @@ const History = () => {
                       <TableRow className="border-b border-border/30">
                         <TableCell className="font-medium">Hydration</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {latestRecord.hydration_level || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {selectedRecord.hydration_level || 0}%
                           </span>
                         </TableCell>
@@ -435,8 +434,7 @@ const History = () => {
                           {(() => {
                             const diff = (latestRecord.hydration_level || 0) - (selectedRecord.hydration_level || 0);
                             return (
-                              <span className={`inline-flex items-center gap-1 font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                {diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                              <span className={`font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                                 {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
                               </span>
                             );
@@ -448,12 +446,12 @@ const History = () => {
                       <TableRow className="border-b border-border/30">
                         <TableCell className="font-medium">Oiliness</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {latestRecord.oiliness_level || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {selectedRecord.oiliness_level || 0}%
                           </span>
                         </TableCell>
@@ -462,8 +460,7 @@ const History = () => {
                             const diff = (latestRecord.oiliness_level || 0) - (selectedRecord.oiliness_level || 0);
                             // For oiliness, lower is better so we invert the color logic
                             return (
-                              <span className={`inline-flex items-center gap-1 font-semibold ${diff < 0 ? 'text-green-600' : diff > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                {diff < 0 ? <TrendingDown className="w-4 h-4" /> : diff > 0 ? <TrendingUp className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                              <span className={`font-semibold ${diff < 0 ? 'text-green-600' : diff > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                                 {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
                               </span>
                             );
@@ -475,12 +472,12 @@ const History = () => {
                       <TableRow>
                         <TableCell className="font-medium">Tone Evenness</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {latestRecord.tone_evenness || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
                             {selectedRecord.tone_evenness || 0}%
                           </span>
                         </TableCell>
@@ -488,8 +485,7 @@ const History = () => {
                           {(() => {
                             const diff = (latestRecord.tone_evenness || 0) - (selectedRecord.tone_evenness || 0);
                             return (
-                              <span className={`inline-flex items-center gap-1 font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                                {diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                              <span className={`font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                                 {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
                               </span>
                             );
