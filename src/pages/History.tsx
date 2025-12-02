@@ -177,11 +177,11 @@ const History = () => {
                 <h2 className="text-xl font-semibold">
                   {selectedRecord?.id === latestRecord?.id ? 'Latest Analysis' : 'Selected Analysis'}
                 </h2>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <span className="text-3xl font-bold text-primary">
                     {selectedRecord?.overall_score || 0}%
                   </span>
-                </div>
+                </div> */}
               </div>
 
               {/* Chart */}
@@ -202,7 +202,12 @@ const History = () => {
                       tick={{ fontSize: 12 }}
                       stroke="hsl(var(--muted-foreground))"
                     />
-                    <YAxis hide />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      stroke="hsl(var(--muted-foreground))"
+                      domain={[0, 100]}
+                      ticks={[0, 20, 40, 60, 80, 100]}
+                    />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))',
@@ -211,6 +216,7 @@ const History = () => {
                         borderRadius: '8px',
                         padding: '8px 12px'
                       }}
+                      formatter={(value: number) => `${value}%`}
                     />
                     <Line 
                       type="monotone" 
