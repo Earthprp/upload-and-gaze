@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Disclaimer from "@/components/Disclaimer";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useEffect } from "react";
@@ -378,56 +379,125 @@ const History = () => {
                 </div>
               )}
 
-              {/* Comparison Stats */}
+              {/* Comparison Table */}
               {selectedRecord?.id !== latestRecord?.id && latestRecord && selectedRecord && (
-                <div className="mt-4 p-4 bg-primary/5 rounded-lg">
-                  <h3 className="text-sm font-semibold mb-3">Comparison</h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-muted-foreground mb-1">Skin Health</p>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{latestRecord.overall_score || 0}%</span>
-                        <span className="text-muted-foreground">←</span>
-                        <span className="font-semibold">{selectedRecord.overall_score || 0}%</span>
-                        <span className={`text-xs font-semibold ${
-                          (latestRecord.overall_score || 0) > (selectedRecord.overall_score || 0) 
-                            ? 'text-green-600' 
-                            : (latestRecord.overall_score || 0) < (selectedRecord.overall_score || 0)
-                            ? 'text-red-600'
-                            : 'text-muted-foreground'
-                        }`}>
-                          {(latestRecord.overall_score || 0) > (selectedRecord.overall_score || 0) 
-                            ? `+${(latestRecord.overall_score || 0) - (selectedRecord.overall_score || 0)}%`
-                            : (latestRecord.overall_score || 0) < (selectedRecord.overall_score || 0)
-                            ? `${(latestRecord.overall_score || 0) - (selectedRecord.overall_score || 0)}%`
-                            : '0%'
-                          }
-                        </span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground mb-1">Issues</p>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{latestRecord.detection_counts || 0}</span>
-                        <span className="text-muted-foreground">←</span>
-                        <span className="font-semibold">{selectedRecord.detection_counts || 0}</span>
-                        <span className={`text-xs font-semibold ${
-                          (latestRecord.detection_counts || 0) < (selectedRecord.detection_counts || 0) 
-                            ? 'text-green-600' 
-                            : (latestRecord.detection_counts || 0) > (selectedRecord.detection_counts || 0)
-                            ? 'text-red-600'
-                            : 'text-muted-foreground'
-                        }`}>
-                          {(latestRecord.detection_counts || 0) < (selectedRecord.detection_counts || 0) 
-                            ? `${(latestRecord.detection_counts || 0) - (selectedRecord.detection_counts || 0)}`
-                            : (latestRecord.detection_counts || 0) > (selectedRecord.detection_counts || 0)
-                            ? `${(latestRecord.detection_counts || 0) - (selectedRecord.detection_counts || 0)}`
-                            : '0'
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="mt-6">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-border/50">
+                        <TableHead className="text-primary font-medium">Metric</TableHead>
+                        <TableHead className="text-center text-primary font-medium">Latest Image</TableHead>
+                        <TableHead className="text-center text-primary font-medium">Selected Image</TableHead>
+                        <TableHead className="text-center text-primary font-medium">Change</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {/* Skin Health */}
+                      <TableRow className="border-b border-border/30">
+                        <TableCell className="font-medium">Skin Health</TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                            {latestRecord.overall_score || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                            {selectedRecord.overall_score || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(() => {
+                            const diff = (latestRecord.overall_score || 0) - (selectedRecord.overall_score || 0);
+                            return (
+                              <span className={`inline-flex items-center gap-1 font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                {diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                                {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Hydration */}
+                      <TableRow className="border-b border-border/30">
+                        <TableCell className="font-medium">Hydration</TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                            {latestRecord.hydration_level || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                            {selectedRecord.hydration_level || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(() => {
+                            const diff = (latestRecord.hydration_level || 0) - (selectedRecord.hydration_level || 0);
+                            return (
+                              <span className={`inline-flex items-center gap-1 font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                {diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                                {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Oiliness */}
+                      <TableRow className="border-b border-border/30">
+                        <TableCell className="font-medium">Oiliness</TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                            {latestRecord.oiliness_level || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                            {selectedRecord.oiliness_level || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(() => {
+                            const diff = (latestRecord.oiliness_level || 0) - (selectedRecord.oiliness_level || 0);
+                            // For oiliness, lower is better so we invert the color logic
+                            return (
+                              <span className={`inline-flex items-center gap-1 font-semibold ${diff < 0 ? 'text-green-600' : diff > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                {diff < 0 ? <TrendingDown className="w-4 h-4" /> : diff > 0 ? <TrendingUp className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                                {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Tone Evenness */}
+                      <TableRow>
+                        <TableCell className="font-medium">Tone Evenness</TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm">
+                            {latestRecord.tone_evenness || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-red-100 text-red-700 font-semibold text-sm">
+                            {selectedRecord.tone_evenness || 0}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {(() => {
+                            const diff = (latestRecord.tone_evenness || 0) - (selectedRecord.tone_evenness || 0);
+                            return (
+                              <span className={`inline-flex items-center gap-1 font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                                {diff > 0 ? <TrendingUp className="w-4 h-4" /> : diff < 0 ? <TrendingDown className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                                {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </div>
