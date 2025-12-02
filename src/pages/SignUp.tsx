@@ -93,7 +93,7 @@ const SignUp = () => {
   };
 
   const handleDeclinePrivacy = () => {
-    navigate("/");
+    navigate("/upload");
   };
 
   return (
@@ -112,7 +112,7 @@ const SignUp = () => {
           <ScrollArea className="h-[60vh] pr-4">
             <div className="space-y-6 text-foreground">
               <section>
-                <h2 className="text-xl font-semibold text-primary mb-3">การเก็บรวบรวมข้อมูลส่วนบุคคล</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">การเก็บรวบรวมข้อมูลส่วนบุคคล</h2>
                 <p className="text-muted-foreground mb-4">
                   เพื่อให้คุณได้รับการวิเคราะห์ผิวที่แม่นยำและเหมาะสมกับคุณมากที่สุด เราจำเป็นต้องเก็บข้อมูลดังต่อไปนี้:
                 </p>
