@@ -32,7 +32,7 @@ type AnalysisData = {
   acneTotalCount?: number;
   otherSkinIssuesCount?: number;
   overallScore?: number;
-  oilinessLevel?: number;
+  smoothnessLevel?: number;
   hydrationLevel?: number;
   toneEvenness?: number;
   skincareRecommendations?: string[];
@@ -141,7 +141,7 @@ const Analysis = () => {
             overall_assessment: analysis.overallAssessment || null,
             detection_counts: analysis.detectionCounts || null,
             overall_score: analysis.overallScore || null,
-            oiliness_level: analysis.oilinessLevel || null,
+            smoothness_level: analysis.smoothnessLevel || null,
             hydration_level: analysis.hydrationLevel || null,
             tone_evenness: analysis.toneEvenness || null,
             overall_severity: analysis.overallSeverity || null,
@@ -301,8 +301,8 @@ const Analysis = () => {
               </Card>
               <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200/50">
                 <div className="text-center">
-                  <p className="text-xs text-muted-foreground mb-1">ความมัน</p>
-                  <p className="text-3xl font-bold text-blue-600">{analysis.oilinessLevel ?? 0}%</p>
+                  <p className="text-xs text-muted-foreground mb-1">ความเรียบเนียน</p>
+                  <p className="text-3xl font-bold text-blue-600">{analysis.smoothnessLevel ?? 0}%</p>
                 </div>
               </Card>
               <Card className="p-4 bg-green-50 dark:bg-green-950/20 border-green-200/50">

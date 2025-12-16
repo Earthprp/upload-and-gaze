@@ -17,7 +17,7 @@ interface HistoryRecord {
   overall_assessment: string | null;
   detection_counts: number | null;
   overall_score: number | null;
-  oiliness_level: number | null;
+  smoothness_level: number | null;
   hydration_level: number | null;
   tone_evenness: number | null;
   overall_severity: string | null;
@@ -88,7 +88,7 @@ const History = () => {
     date: new Date(record.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     score: record.overall_score || 0,
     hydration: record.hydration_level || 0,
-    oiliness: record.oiliness_level || 0,
+    smoothness: record.smoothness_level || 0,
     tone: record.tone_evenness || 0
   }));
 
@@ -239,12 +239,12 @@ const History = () => {
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="oiliness" 
+                      dataKey="smoothness" 
                       stroke="hsl(45 93% 47%)" 
                       strokeWidth={2}
                       dot={{ fill: 'hsl(45 93% 47%)', r: 4 }}
                       activeDot={{ r: 6 }}
-                      name="Oiliness"
+                      name="Skin Smoothness"
                     />
                     <Line 
                       type="monotone" 
@@ -264,19 +264,43 @@ const History = () => {
               <div className="grid grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Skin Health</h3>
-                    <p className="text-3xl font-bold" style={{ color: 'hsl(142 76% 36%)' }}>{latestRecord?.overall_score || 0}%</p>
+                    <p className="text-3xl font-bold mb-2" style={{ color: 'hsl(142 76% 36%)' }}>{latestRecord?.overall_score || 0}%</p>
+                    <div className="w-full h-2 bg-[hsl(142,76%,36%,0.2)] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[hsl(142,76%,36%)] transition-all duration-300"
+                        style={{ width: `${latestRecord?.overall_score || 0}%` }}
+                      />
+                    </div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Hydration</h3>
-                    <p className="text-3xl font-bold" style={{ color: 'hsl(217 91% 60%)' }}>{latestRecord?.hydration_level || 0}%</p>
+                    <p className="text-3xl font-bold mb-2" style={{ color: 'hsl(217 91% 60%)' }}>{latestRecord?.hydration_level || 0}%</p>
+                    <div className="w-full h-2 bg-[hsl(217,91%,60%,0.2)] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[hsl(217,91%,60%)] transition-all duration-300"
+                        style={{ width: `${latestRecord?.hydration_level || 0}%` }}
+                      />
+                    </div>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Oiliness</h3>
-                    <p className="text-3xl font-bold" style={{ color: 'hsl(45 93% 47%)' }}>{latestRecord?.oiliness_level || 0}%</p>
+                    <h3 className="text-lg font-semibold mb-2">Skin Smoothness</h3>
+                    <p className="text-3xl font-bold mb-2" style={{ color: 'hsl(45 93% 47%)' }}>{latestRecord?.smoothness_level || 0}%</p>
+                    <div className="w-full h-2 bg-[hsl(45,93%,47%,0.2)] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[hsl(45,93%,47%)] transition-all duration-300"
+                        style={{ width: `${latestRecord?.smoothness_level || 0}%` }}
+                      />
+                    </div>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Tone Evenness</h3>
-                    <p className="text-3xl font-bold" style={{ color: 'hsl(280 65% 60%)' }}>{latestRecord?.tone_evenness || 0}%</p>
+                    <p className="text-3xl font-bold mb-2" style={{ color: 'hsl(280 65% 60%)' }}>{latestRecord?.tone_evenness || 0}%</p>
+                    <div className="w-full h-2 bg-[hsl(280,65%,60%,0.2)] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[hsl(280,65%,60%)] transition-all duration-300"
+                        style={{ width: `${latestRecord?.tone_evenness || 0}%` }}
+                      />
+                    </div>
                   </div>
                   <div className="col-span-2">
                     <h3 className="text-lg font-semibold mb-2">Overall Assessment</h3>
@@ -442,25 +466,25 @@ const History = () => {
                         </TableCell>
                       </TableRow>
 
-                      {/* Oiliness */}
+                      {/* Skin Smoothness */}
                       <TableRow className="border-b border-border/30">
-                        <TableCell className="font-medium">Oiliness</TableCell>
+                        <TableCell className="font-medium">Skin Smoothness</TableCell>
                         <TableCell className="text-center">
                           <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
-                            {latestRecord.oiliness_level || 0}%
+                            {latestRecord.smoothness_level || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
                           <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
-                            {selectedRecord.oiliness_level || 0}%
+                            {selectedRecord.smoothness_level || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
                           {(() => {
-                            const diff = (latestRecord.oiliness_level || 0) - (selectedRecord.oiliness_level || 0);
-                            // For oiliness, lower is better so we invert the color logic
+                            const diff = (latestRecord.smoothness_level || 0) - (selectedRecord.smoothness_level || 0);
+                            // For smoothness, higher is better
                             return (
-                              <span className={`font-semibold ${diff < 0 ? 'text-green-600' : diff > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                              <span className={`font-semibold ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                                 {diff > 0 ? `+${diff}%` : diff < 0 ? `${diff}%` : '0%'}
                               </span>
                             );
