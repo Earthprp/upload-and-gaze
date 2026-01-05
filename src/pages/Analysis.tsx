@@ -12,7 +12,7 @@ import { ArrowLeft, User, Clock, Sun, Moon, Check, History as HistoryIcon } from
 
 interface ProblemDetail {
   title: string;
-  severity: 'mild' | 'moderate' | 'severe';
+  severity: 'perfect' | 'mild' | 'moderate' | 'severe';
   description: string;
   possibleCauses: string[];
   treatments: string[];
@@ -50,11 +50,28 @@ type AnalysisData = {
   timestamp?: string;
 };
 
-const mapSeverity = (s: string): 'mild' | 'moderate' | 'severe' => {
+const mapSeverity = (s: string): 'perfect' | 'mild' | 'moderate' | 'severe' => {
   const key = (s || '').toLowerCase().trim();
+  if (key === 'perfect' || key === 'excellent' || key === 'flawless') return 'perfect';
   if (key === 'low' || key === 'mild' || key === 'slight') return 'mild';
   if (key === 'medium' || key === 'moderate') return 'moderate';
   return 'severe'; // high/severe/unknown -> severe
+};
+
+const getSeverityThaiLabel = (severity: string): string => {
+  const mapped = mapSeverity(severity);
+  switch (mapped) {
+    case 'perfect':
+      return 'สมบูรณ์แบบ';
+    case 'mild':
+      return 'เล็กน้อย';
+    case 'moderate':
+      return 'ปานกลาง';
+    case 'severe':
+      return 'รุนแรง';
+    default:
+      return 'ไม่ระบุ';
+  }
 };
 
 const Analysis = () => {
@@ -216,6 +233,33 @@ const Analysis = () => {
           </Button>
         </div>
 
+        {/* Title and Meta Info */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-3">ผลการวิเคราะห์ผิวของคุณ</h1>
+          <p className="text-base text-muted-foreground mb-2">
+            ประเภทผิว: {analysis.skinType} • ระดับภาพรวม: {getSeverityThaiLabel(analysis.overallSeverity || '')}
+          </p>
+          <div className="flex items-center justify-center gap-4 text-base text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <User className="w-4 h-4" />
+              <span>ผู้เข้าชม: {user ? (user.user_metadata?.display_name || user.email?.split('@')[0]) : 'Guest'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span>วันที่: {formattedDate}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span>เวลา: {formattedTime}</span>
+            </div>
+          </div>
+          {analysis.overallAssessment && (
+            <p className="mt-4 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              {analysis.overallAssessment}
+            </p>
+          )}
+        </div>
+
         {/* Analysis Images Section */}
         <Card className="p-6 mb-6 shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">Analysis Images</h2>
@@ -254,33 +298,6 @@ const Analysis = () => {
             </div>
           </div>
         </Card>
-
-        {/* Title and Meta Info */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-3">ผลการวิเคราะห์ผิวของคุณ</h1>
-          <p className="text-sm text-muted-foreground mb-2">
-            ประเภทผิว: {analysis.skinType} • ระดับภาพรวม: {mapSeverity(analysis.overallSeverity)}
-          </p>
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <User className="w-4 h-4" />
-              <span>ผู้เข้าชม: {user ? (user.user_metadata?.display_name || user.email?.split('@')[0]) : 'Guest'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>วันที่: {formattedDate}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>เวลา: {formattedTime}</span>
-            </div>
-          </div>
-          {analysis.overallAssessment && (
-            <p className="mt-4 text-muted-foreground max-w-3xl mx-auto">
-              {analysis.overallAssessment}
-            </p>
-          )}
-        </div>
 
         {/* Tabs */}
         <Tabs defaultValue="problems" className="w-full">

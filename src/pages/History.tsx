@@ -163,9 +163,6 @@ const History = () => {
             <Button variant="outline" className="text-sm">
               {historyData.length} Records
             </Button>
-            <Button variant="outline" className="text-sm" disabled>
-              Export
-            </Button>
           </div>
         </div>
 
@@ -304,7 +301,7 @@ const History = () => {
                   </div>
                   <div className="col-span-2">
                     <h3 className="text-lg font-semibold mb-2">Overall Assessment</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-xl text-muted-foreground leading-relaxed">
                       {latestRecord?.overall_assessment || 'No assessment available'}
                     </p>
                   </div>
