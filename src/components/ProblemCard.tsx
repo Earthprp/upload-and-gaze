@@ -135,7 +135,7 @@ export const ProblemCard = ({ title, severity, description, possibleCauses, trea
         <div className="bg-green-50/50 p-4 rounded-lg">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle className="w-5 h-5 text-green-600" />
-            <h4 className="font-medium">วิธีการแก้ไข</h4>
+            <h4 className="font-medium">วิธีการรักษา</h4>
           </div>
           <ul className="space-y-2">
             {treatments.map((treatment, index) => (
