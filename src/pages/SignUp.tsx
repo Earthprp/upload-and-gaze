@@ -77,6 +77,15 @@ const SignUp = () => {
 
     alert("Sign up success! ");
 
+    // Clear form fields
+    setFormData({
+      username: "",
+      email: "",
+      password: "",
+      age: "",
+      gender: ""
+    });
+
     // ไปหน้า Sign In
     navigate("/signin");
   } catch (err) {

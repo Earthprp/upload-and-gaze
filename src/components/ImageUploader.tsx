@@ -55,12 +55,12 @@ const resizeImage = (file: File): Promise<File> => {
             resolve(resizedFile);
           } else {
             URL.revokeObjectURL(url);
-            resolve(file); // Fallback to original
+            resolve(file); 
           }
         }, 'image/jpeg', 0.9);
       } else {
         URL.revokeObjectURL(url);
-        resolve(file); // Fallback to original
+        resolve(file);
       }
     };
 

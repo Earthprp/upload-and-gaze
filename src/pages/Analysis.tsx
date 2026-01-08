@@ -418,41 +418,6 @@ const Analysis = () => {
                 ))}
               </div>
             </Card>
-
-            {/* Weekly Schedule (ตัวอย่างคงเดิม) */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="w-5 h-5" />
-                <h3 className="text-lg font-semibold">ตารางเลือกใช้</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      {["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"].map((day) => (
-                        <th key={day} className="p-2 text-center font-medium">{day}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-                        <td key={day} className="p-2">
-                          <div className="space-y-1">
-                            <div className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded text-center">
-                              เช้า: ปกติ
-                            </div>
-                            <div className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-center">
-                              {day % 2 === 0 ? "เย็น: ปกติ" : "เย็น: BHA"}
-                            </div>
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Card>
           </TabsContent>
 
           {/* Products/สถิตผิวและผลิตภัณฑ์ */}

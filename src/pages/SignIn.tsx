@@ -78,6 +78,8 @@ const SignIn = () => {
     if (signInError) {
       setError(signInError.message);
     } else {
+      // Clear form fields
+      setFormData({ email: "", password: "" });
       navigate("/analysis"); // เปลี่ยนเป็นหน้า dashboard ของคุณ
     }
   };
