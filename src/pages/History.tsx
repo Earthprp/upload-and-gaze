@@ -417,12 +417,12 @@ const History = () => {
                       <TableRow className="border-b border-border/30">
                         <TableCell className="font-medium">Skin Health</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm dark:bg-green-900/30 dark:text-green-200">
                             {latestRecord.overall_score || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-green-100 text-green-700 font-semibold text-sm dark:bg-green-900/30 dark:text-green-200">
                             {selectedRecord.overall_score || 0}%
                           </span>
                         </TableCell>
@@ -442,12 +442,12 @@ const History = () => {
                       <TableRow className="border-b border-border/30">
                         <TableCell className="font-medium">Hydration</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-blue-100 text-blue-700 font-semibold text-sm dark:bg-blue-900/30 dark:text-blue-200">
                             {latestRecord.hydration_level || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-blue-100 text-blue-700 font-semibold text-sm dark:bg-blue-900/30 dark:text-blue-200">
                             {selectedRecord.hydration_level || 0}%
                           </span>
                         </TableCell>
@@ -467,12 +467,12 @@ const History = () => {
                       <TableRow className="border-b border-border/30">
                         <TableCell className="font-medium">Skin Smoothness</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-yellow-100 text-yellow-700 font-semibold text-sm dark:bg-yellow-900/30 dark:text-yellow-200">
                             {latestRecord.smoothness_level || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-yellow-100 text-yellow-700 font-semibold text-sm dark:bg-yellow-900/30 dark:text-yellow-200">
                             {selectedRecord.smoothness_level || 0}%
                           </span>
                         </TableCell>
@@ -493,12 +493,12 @@ const History = () => {
                       <TableRow>
                         <TableCell className="font-medium">Tone Evenness</TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-purple-100 text-purple-700 font-semibold text-sm dark:bg-purple-900/30 dark:text-purple-200">
                             {latestRecord.tone_evenness || 0}%
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-sm">
+                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-purple-100 text-purple-700 font-semibold text-sm dark:bg-purple-900/30 dark:text-purple-200">
                             {selectedRecord.tone_evenness || 0}%
                           </span>
                         </TableCell>
