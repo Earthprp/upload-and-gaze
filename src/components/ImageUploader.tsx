@@ -5,6 +5,112 @@ import { Card } from "@/components/ui/card";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import supabase from "@/lib/supabase";
+import heic2any from "heic2any";
+
+// Function to convert HEIC to JPEG
+const convertHeicToJpeg = async (file: File): Promise<File> => {
+  // Check if file is HEIC/HEIF
+  const isHeic = file.type === "image/heic" || 
+                 file.type === "image/heif" || 
+                 file.name.toLowerCase().endsWith('.heic') ||
+                 file.name.toLowerCase().endsWith('.heif');
+  
+  if (!isHeic) {
+    return file; // Return original if not HEIC
+  }
+
+  try {
+    // Convert HEIC to JPEG
+    const convertedBlob = await heic2any({
+      blob: file,
+      toType: "image/jpeg",
+      quality: 0.9
+    });
+
+    // heic2any might return Blob or Blob[]
+    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+    
+    // Create new File from converted blob
+    const jpegFile = new File(
+      [blob], 
+      file.name.replace(/\.(heic|heif)$/i, '.jpg'),
+      { type: "image/jpeg", lastModified: Date.now() }
+    );
+    
+    return jpegFile;
+  } catch (error) {
+    console.error("HEIC conversion error:", error);
+    toast.error("Failed to convert HEIC image. Please try another format.");
+    throw error;
+  }
+};
+
+// Function to auto-adjust brightness and contrast for optimal facial analysis
+const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  
+  // Calculate average brightness and histogram
+  let totalBrightness = 0;
+  let histogram = new Array(256).fill(0);
+  
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const brightness = (r + g + b) / 3;
+    totalBrightness += brightness;
+    histogram[Math.floor(brightness)]++;
+  }
+  const avgBrightness = totalBrightness / (data.length / 4);
+  
+  // Optimal brightness: 120-140 (out of 255)
+  const targetBrightness = 130;
+  
+  // Calculate adjustment factor - more aggressive for bright images
+  let brightnessAdjust = targetBrightness - avgBrightness;
+  
+  // If image is too bright (>160), apply stronger reduction
+  if (avgBrightness > 160) {
+    brightnessAdjust *= 1.5; // 50% more aggressive
+  }
+  // If image is too dark (<100), apply stronger increase
+  else if (avgBrightness < 100) {
+    brightnessAdjust *= 1.3; // 30% more aggressive
+  }
+  
+  // Adjust contrast based on brightness distribution
+  let contrast = 1.15;
+  if (avgBrightness > 160) {
+    contrast = 1.25; // Increase contrast more for bright images
+  } else if (avgBrightness < 100) {
+    contrast = 1.2; // Moderate contrast for dark images
+  }
+  
+  console.log('🎨 Image Adjustment:', {
+    originalBrightness: Math.round(avgBrightness),
+    targetBrightness,
+    adjustment: Math.round(brightnessAdjust),
+    contrast,
+    status: avgBrightness > 160 ? 'Too Bright' : avgBrightness < 100 ? 'Too Dark' : 'OK'
+  });
+  
+  // Apply brightness and contrast adjustment
+  for (let i = 0; i < data.length; i += 4) {
+    // Adjust each RGB channel
+    for (let j = 0; j < 3; j++) {
+      let value = data[i + j];
+      // Apply contrast (centered around 128)
+      value = ((value - 128) * contrast) + 128;
+      // Apply brightness
+      value = value + brightnessAdjust;
+      // Clamp to 0-255
+      data[i + j] = Math.max(0, Math.min(255, value));
+    }
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+};
 
 // Function to resize image to max 1024x768 while maintaining aspect ratio
 const resizeImage = (file: File): Promise<File> => {
@@ -43,6 +149,9 @@ const resizeImage = (file: File): Promise<File> => {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
+        
+        // Auto-adjust brightness and contrast for optimal facial analysis
+        autoAdjustImage(canvas, ctx);
         
         // Convert to blob and create new file
         canvas.toBlob((blob) => {
@@ -233,7 +342,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
           // 🔹 Run n8n webhook and FastAPI detection in PARALLEL ⚡
           const [n8nResponse, detectResponse] = await Promise.all([
             // 1. n8n webhook for skin analysis
-            fetch("http://localhost:5678/webhook-test/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
+            fetch("https://anyway-jar-without-leave.trycloudflare.com/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -250,7 +359,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
               }),
             }),
             // 2. FastAPI for skin detection (runs simultaneously)
-            fetch("http://localhost:8000/api/detect-skin", {
+            fetch("https://appreciated-hopefully-paintball-patterns.trycloudflare.com/api/detect-skin", {
               method: "POST",
               body: formData,
             })
@@ -315,16 +424,23 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   };
 
   const handleImageSelect = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/") && !file.name.toLowerCase().endsWith('.heic') && !file.name.toLowerCase().endsWith('.heif')) {
       toast.error("Please select an image file");
       return;
     }
 
     try {
-      toast.info("Resizing image...");
+      // Convert HEIC to JPEG if needed
+      let processedFile = file;
+      if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+        toast.info("Converting HEIC image...");
+        processedFile = await convertHeicToJpeg(file);
+      }
       
-      // Resize the image before uploading
-      const resizedFile = await resizeImage(file);
+      toast.info("Optimizing image brightness and contrast...");
+      
+      // Resize and auto-adjust the image before uploading
+      const resizedFile = await resizeImage(processedFile);
       
       // Upload the resized image
       await uploadToSupabase(resizedFile);

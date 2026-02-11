@@ -115,4 +115,103 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Prevent horizontal overflow on mobile */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  /* Fix for cards and containers on mobile */
+  @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Prevent images from overflowing */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Ensure cards don't overflow */
+    [class*="card"], [class*="Card"] {
+      max-width: 100%;
+    }
+    
+    /* Fix for long text */
+    p, h1, h2, h3, h4, h5, h6 {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    /* Reduce spacing on mobile to fit more content */
+    .min-h-screen {
+      min-height: auto !important;
+    }
+    
+    /* Compact padding and margins */
+    [class*="py-8"] {
+      padding-top: 1rem !important;
+      padding-bottom: 1rem !important;
+    }
+    
+    [class*="mb-6"], [class*="mt-6"] {
+      margin-top: 1rem !important;
+      margin-bottom: 1rem !important;
+    }
+    
+    [class*="mb-4"], [class*="mt-4"] {
+      margin-top: 0.75rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+    
+    /* Reduce text sizes on mobile */
+    h1 {
+      font-size: 1.5rem !important;
+      line-height: 2rem !important;
+    }
+    
+    h2 {
+      font-size: 1.25rem !important;
+      line-height: 1.75rem !important;
+    }
+    
+    h3 {
+      font-size: 1.125rem !important;
+      line-height: 1.5rem !important;
+    }
+    
+    /* Compact card padding */
+    [class*="p-6"] {
+      padding: 1rem !important;
+    }
+    
+    /* Reduce image aspect ratio on mobile */
+    .aspect-square {
+      aspect-ratio: 4/3 !important;
+    }
+    
+    /* Fix comparison images on History page */
+    .aspect-\[3\/4\] {
+      aspect-ratio: 1/1 !important;
+      max-height: 40vh !important;
+    }
+    
+    /* Compact table on mobile */
+    table {
+      font-size: 0.875rem !important;
+    }
+    
+    table th, table td {
+      padding: 0.5rem !important;
+    }
+  }
 }

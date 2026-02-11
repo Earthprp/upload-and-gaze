@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      'della-dormient-actually.ngrok-free.dev',
+      'javascript-say-webcast-mississippi.trycloudflare.com',
+      '.trycloudflare.com'
+    ],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
