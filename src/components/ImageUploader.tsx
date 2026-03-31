@@ -72,25 +72,25 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     histogram[Math.floor(brightness)]++;
   }
   const avgBrightness = totalBrightness / (data.length / 4);
-  // Optimal brightness: 120-140 (out of 255)
-  const targetBrightness = 130;
+  // Optimal brightness: 100-120 (out of 255)
+  const targetBrightness = 110;
   
   // Calculate adjustment factor - more aggressive for bright images
   let brightnessAdjust = targetBrightness - avgBrightness;
   
-  // If image is too bright (>160), apply stronger reduction
-  if (avgBrightness > 160) {
-    brightnessAdjust *= 1.5; // 50% more aggressive
+  // If image is too bright (>140), apply stronger reduction
+  if (avgBrightness > 140) {
+    brightnessAdjust *= 1.8; // 80% more aggressive
   }
-  // If image is too dark (<100), apply stronger increase
-  else if (avgBrightness < 100) {
+  // If image is too dark (<80), apply stronger increase
+  else if (avgBrightness < 80) {
     brightnessAdjust *= 1.3; // 30% more aggressive
   }
   // Adjust contrast based on brightness distribution
   let contrast = 1.15;
-  if (avgBrightness > 160) {
-    contrast = 1.25; // Increase contrast more for bright images
-  } else if (avgBrightness < 100) {
+  if (avgBrightness > 140) {
+    contrast = 1.3; // Increase contrast more for bright images
+  } else if (avgBrightness < 80) {
     contrast = 1.2; // Moderate contrast for dark images
   }
   

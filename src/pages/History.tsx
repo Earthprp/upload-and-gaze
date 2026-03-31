@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface HistoryRecord {
   id: string;
@@ -567,8 +568,20 @@ const History = () => {
                           variant={selectedRecord?.id === record.id ? "default" : "outline"}
                           size="sm"
                           onClick={() => {
+                            toast.info(
+                              <div className="space-y-1">
+                                <p className="font-semibold">คำแนะนำ:</p>
+                                <ul className="text-sm space-y-0.5">
+                                  <li>• ถ่ายในสภาพแสงที่เหมือนกัน</li>
+                                  <li>• ไม่สวมแว่น หมวก หรือเครื่องประดับที่บดบังใบหน้า</li>
+                                  <li>• ใช้ระยะห่างและมุมกล้องเดียวกับรูปที่ต้องการเปรียบเทียบ</li>
+                                </ul>
+                              </div>,
+                              {
+                                duration: 6000,
+                              }
+                            );
                             setSelectedRecord(record);
-                            // Scroll to top to see the updated details
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
                         >
