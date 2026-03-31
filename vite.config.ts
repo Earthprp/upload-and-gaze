@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     allowedHosts: [
       'della-dormient-actually.ngrok-free.dev',
-      'javascript-say-webcast-mississippi.trycloudflare.com',
+      'vector-bags-reaches-madonna.trycloudflare.com',
       '.trycloudflare.com'
     ],
   },

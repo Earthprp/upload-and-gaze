@@ -63,7 +63,6 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     histogram[Math.floor(brightness)]++;
   }
   const avgBrightness = totalBrightness / (data.length / 4);
-  
   // Optimal brightness: 120-140 (out of 255)
   const targetBrightness = 130;
   
@@ -78,7 +77,6 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
   else if (avgBrightness < 100) {
     brightnessAdjust *= 1.3; // 30% more aggressive
   }
-  
   // Adjust contrast based on brightness distribution
   let contrast = 1.15;
   if (avgBrightness > 160) {
@@ -94,7 +92,6 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     contrast,
     status: avgBrightness > 160 ? 'Too Bright' : avgBrightness < 100 ? 'Too Dark' : 'OK'
   });
-  
   // Apply brightness and contrast adjustment
   for (let i = 0; i < data.length; i += 4) {
     // Adjust each RGB channel
@@ -108,7 +105,6 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
       data[i + j] = Math.max(0, Math.min(255, value));
     }
   }
-  
   ctx.putImageData(imageData, 0, 0);
 };
 
@@ -119,7 +115,6 @@ const resizeImage = (file: File): Promise<File> => {
     const MAX_HEIGHT = 768;
     const img = new Image();
     const url = URL.createObjectURL(file);
-    
     img.onload = () => {
       let { width, height } = img;
 
@@ -137,22 +132,18 @@ const resizeImage = (file: File): Promise<File> => {
           width = Math.round(MAX_HEIGHT * aspectRatio);
         }
       }
-
       // Create canvas and draw resized image
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      
       if (ctx) {
         // Use better image scaling
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
-        
         // Auto-adjust brightness and contrast for optimal facial analysis
         autoAdjustImage(canvas, ctx);
-        
         // Convert to blob and create new file
         canvas.toBlob((blob) => {
           if (blob) {
@@ -247,67 +238,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
       const { data: urlData } = supabase.storage
         .from('skin_image')
         .getPublicUrl(filePath);
-
-  //     if (urlData) {
-  //       setSelectedImage(urlData.publicUrl);
-  //       toast.success("Image uploaded successfully!");
-
-  //       try {
-  //         setIsAnalyzing(true);
-  //         //const base64Image = await convertFileToBase64(file);
-  //         const response = await fetch('https://earthprp.app.n8n.cloud/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99', {
-  //           method: 'POST',
-  //           headers: {'Content-Type': 'application/json'},
-  //           body: JSON.stringify({
-  //             upload_data: {
-  //               path: data.path,
-  //               id: data.id,
-  //               fullPath: data.fullPath
-  //             },
-  //             public_url: urlData.publicUrl,
-  //             //base64_input: base64Image,
-  //             //inputs: base64Image,
-  //             file_path: filePath,
-  //             timestamp: new Date().toISOString()
-  //           })
-  //         });
-
-  //         if (response.ok) {
-  //           const responseData = await response.json();
-  //           if (responseData) {
-  //             setSkinAnalysis(responseData);
-  //             if (onAnalysisComplete) {
-  //               onAnalysisComplete(responseData);
-  //             }
-  //             toast.success('Skin analysis completed!');
-  //             // Navigate to analysis page
-  //             navigate('/analysis', { 
-  //               state: { 
-  //                 data: responseData, 
-  //                 imageUrl: urlData.publicUrl 
-  //               } 
-  //             });
-  //           } else {
-  //             toast.error('No analysis data received');
-  //           }
-  //         } else {
-  //           toast.error(`Analysis failed (${response.status})`);
-  //         }
-  //       } catch (error) {  
-  //         console.error('Webhook error:', error);
-  //         toast.error('Error during analysis');
-  //       } finally {
-  //         setIsAnalyzing(false);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error('Upload error:', error);
-  //     toast.error(error instanceof Error ? error.message : "Failed to upload image to Supabase");
-  //   } finally {
-  //     setIsUploading(false);
-  //     setUploadProgress(0);
-  //   }
-  // };
+        
         if (urlData) {
         setSelectedImage(urlData.publicUrl);
         toast.success("Image uploaded successfully!");
@@ -342,7 +273,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
           // 🔹 Run n8n webhook and FastAPI detection in PARALLEL ⚡
           const [n8nResponse, detectResponse] = await Promise.all([
             // 1. n8n webhook for skin analysis
-            fetch("https://anyway-jar-without-leave.trycloudflare.com/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
+            fetch("https://late-stream-bottles-seeking.trycloudflare.com/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -359,7 +290,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
               }),
             }),
             // 2. FastAPI for skin detection (runs simultaneously)
-            fetch("https://appreciated-hopefully-paintball-patterns.trycloudflare.com/api/detect-skin", {
+            fetch("https://domain-grows-simulation-rejected.trycloudflare.com/api/detect-skin", {
               method: "POST",
               body: formData,
             })
