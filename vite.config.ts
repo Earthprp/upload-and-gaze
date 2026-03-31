@@ -8,11 +8,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: [
-      'della-dormient-actually.ngrok-free.dev',
-      'vector-bags-reaches-madonna.trycloudflare.com',
-      '.trycloudflare.com'
-    ],
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

@@ -6,6 +6,15 @@ import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import supabase from "@/lib/supabase";
 import heic2any from "heic2any";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Function to convert HEIC to JPEG
 const convertHeicToJpeg = async (file: File): Promise<File> => {
@@ -106,6 +115,166 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
     }
   }
   ctx.putImageData(imageData, 0, 0);
+};
+
+// Function to detect face and return bounding box coordinates
+const detectAndGetFace = async (file: File): Promise<{ detected: boolean; boundingBox?: { x: number; y: number; width: number; height: number } }> => {
+  return new Promise(async (resolve) => {
+    try {
+      // Dynamically import MediaPipe
+      const { FaceDetection } = await import('@mediapipe/face_detection');
+      
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = async () => {
+        try {
+          // Create canvas to process image
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            console.warn('Cannot get canvas context');
+            URL.revokeObjectURL(url);
+            resolve({ detected: true });
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0);
+          
+          // Initialize MediaPipe Face Detection
+          const faceDetection = new FaceDetection({
+            locateFile: (file) => {
+              return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`;
+            }
+          });
+
+          faceDetection.setOptions({
+            model: 'short',
+            minDetectionConfidence: 0.5
+          });
+
+          let detectionResult: { detected: boolean; boundingBox?: { x: number; y: number; width: number; height: number } } = { detected: false };
+
+          faceDetection.onResults((results) => {
+            if (results.detections && results.detections.length > 0) {
+              const detection = results.detections[0];
+              const box = detection.boundingBox;
+              detectionResult = {
+                detected: true,
+                boundingBox: {
+                  x: box.xCenter - box.width / 2,
+                  y: box.yCenter - box.height / 2,
+                  width: box.width,
+                  height: box.height
+                }
+              };
+              console.log('Face detected at:', detectionResult.boundingBox);
+            } else {
+              console.log('No face detected');
+            }
+          });
+
+          await faceDetection.send({ image: canvas });
+          
+          URL.revokeObjectURL(url);
+          faceDetection.close();
+          resolve(detectionResult);
+        } catch (error) {
+          console.error('Face detection error:', error);
+          URL.revokeObjectURL(url);
+          resolve({ detected: true }); // Allow through on error
+        }
+      };
+
+      img.onerror = () => {
+        console.error('Image load error');
+        URL.revokeObjectURL(url);
+        resolve({ detected: true });
+      };
+
+      img.src = url;
+    } catch (error) {
+      console.error('MediaPipe import error:', error);
+      resolve({ detected: true }); // Allow through if MediaPipe fails to load
+    }
+  });
+};
+
+// Function to crop image to center on face with padding
+const cropFaceToCenter = (file: File, boundingBox: { x: number; y: number; width: number; height: number }): Promise<File> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        resolve(file);
+        return;
+      }
+
+      // Calculate crop area with padding (1.8x face size to include shoulders/background)
+      const padding = 1.8;
+      const faceWidth = boundingBox.width * img.width;
+      const faceHeight = boundingBox.height * img.height;
+      const faceCenterX = (boundingBox.x + boundingBox.width / 2) * img.width;
+      const faceCenterY = (boundingBox.y + boundingBox.height / 2) * img.height;
+      
+      // Crop dimensions (wider to fit oval guide which is 55% width, 75% height)
+      const cropWidth = faceWidth * padding;
+      const cropHeight = faceHeight * padding * 1.4; // Taller for oval shape
+      
+      // Calculate crop position (centered on face)
+      let cropX = faceCenterX - cropWidth / 2;
+      let cropY = faceCenterY - cropHeight / 2;
+      
+      // Ensure crop area is within image bounds
+      cropX = Math.max(0, Math.min(cropX, img.width - cropWidth));
+      cropY = Math.max(0, Math.min(cropY, img.height - cropHeight));
+      
+      // Adjust if crop exceeds image boundaries
+      const finalCropWidth = Math.min(cropWidth, img.width - cropX);
+      const finalCropHeight = Math.min(cropHeight, img.height - cropY);
+      
+      // Set canvas to crop size
+      canvas.width = finalCropWidth;
+      canvas.height = finalCropHeight;
+      
+      // Draw cropped image
+      ctx.drawImage(
+        img,
+        cropX, cropY, finalCropWidth, finalCropHeight,
+        0, 0, finalCropWidth, finalCropHeight
+      );
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const croppedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          URL.revokeObjectURL(url);
+          resolve(croppedFile);
+        } else {
+          URL.revokeObjectURL(url);
+          resolve(file);
+        }
+      }, 'image/jpeg', 0.95);
+    };
+    
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    
+    img.src = url;
+  });
 };
 
 // Function to resize image to max 1024x768 while maintaining aspect ratio
@@ -210,6 +379,8 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [skinAnalysis, setSkinAnalysis] = useState<SkinAnalysisData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showNoFaceDialog, setShowNoFaceDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadToSupabase = async (file: File) => {
@@ -273,7 +444,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
           // 🔹 Run n8n webhook and FastAPI detection in PARALLEL ⚡
           const [n8nResponse, detectResponse] = await Promise.all([
             // 1. n8n webhook for skin analysis
-            fetch("https://late-stream-bottles-seeking.trycloudflare.com/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
+            fetch("http://localhost:5678/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -290,7 +461,7 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
               }),
             }),
             // 2. FastAPI for skin detection (runs simultaneously)
-            fetch("https://domain-grows-simulation-rejected.trycloudflare.com/api/detect-skin", {
+            fetch("http://localhost:8000/api/detect-skin", {
               method: "POST",
               body: formData,
             })
@@ -368,10 +539,41 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         processedFile = await convertHeicToJpeg(file);
       }
       
+      // ✅ Detect Face FIRST - reject immediately if no face found
+      toast.info("Detecting face...");
+      const faceResult = await detectAndGetFace(processedFile);
+
+      if (!faceResult.detected) {
+        setShowNoFaceDialog(true);
+        return;
+      }
+
+      // Face detected! Auto-crop to center face if bounding box is available
+      let finalFile = processedFile;
+      if (faceResult.boundingBox) {
+        toast.info("Cropping to center face...");
+        finalFile = await cropFaceToCenter(processedFile, faceResult.boundingBox);
+      }
+
+      // Show preview with overlay
+      setPendingFile(finalFile);
+      const imageUrl = URL.createObjectURL(finalFile);
+      setSelectedImage(imageUrl);
+      toast.success("พบใบหน้าแล้ว! กรุณาตรวจสอบตำแหน่งในกรอบ");
+    } catch (error) {
+      console.error('Error processing image:', error);
+      toast.error('Failed to process image');
+    }
+  };
+
+  const handleConfirmUpload = async () => {
+    if (!pendingFile) return;
+
+    try {
       toast.info("Optimizing image brightness and contrast...");
       
       // Resize and auto-adjust the image before uploading
-      const resizedFile = await resizeImage(processedFile);
+      const resizedFile = await resizeImage(pendingFile);
       
       // Upload the resized image
       await uploadToSupabase(resizedFile);
@@ -506,6 +708,28 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
                   alt={showAnnotated && annotatedImage ? "Detected Skin" : "Preview"}
                   className="w-full h-auto max-h-[600px] object-contain"
                 />
+                
+                {/* Face Guide Overlay on Preview */}
+                {!isAnalyzing && !showAnnotated && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="relative" style={{ width: '55%', height: '75%' }}>
+                      {/* Oval Face Guide */}
+                      <div className="absolute inset-0 border-4 border-green-500/60 rounded-[50%] shadow-lg">
+                        <div className="absolute inset-0 border-2 border-dashed border-green-400/80 rounded-[50%]"></div>
+                      </div>
+                      {/* Corner markers */}
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0.5 h-4 bg-green-500"></div>
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0.5 h-4 bg-green-500"></div>
+                      <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-0.5 bg-green-500"></div>
+                      <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-0.5 bg-green-500"></div>
+                    </div>
+                    {/* Instruction text */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
+                      จัดตำแหน่งใบหน้าให้อยู่ในกรอบสีเขียว
+                    </div>
+                  </div>
+                )}
+
                 {isAnalyzing && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <div className="text-center text-white">
@@ -530,28 +754,52 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
               )}
 
               <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (!isUploading) {
-                      fileInputRef.current?.click();
-                    }
-                  }}
-                  className="w-full"
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
+                {pendingFile && !isUploading && !annotatedImage ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setPendingFile(null);
+                      }}
+                      className="w-full"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      ยกเลิก
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={handleConfirmUpload}
+                      className="w-full bg-gradient-to-r from-primary to-accent"
+                    >
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload Different Image
-                    </>
-                  )}
-                </Button>
+                      ยืนยันและอัปโหลด
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!isUploading) {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                    className="w-full"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Different Image
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </Card>
@@ -690,6 +938,23 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
         </>
       )}
+
+      {/* No Face Detected Alert Dialog */}
+      <AlertDialog open={showNoFaceDialog} onOpenChange={setShowNoFaceDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ไม่พบใบหน้าในรูปภาพ</AlertDialogTitle>
+            <AlertDialogDescription>
+              กรุณาอัปโหลดรูปภาพที่มีใบหน้าชัดเจน เพื่อให้ระบบสามารถวิเคราะห์ผิวหน้าได้อย่างแม่นยำ
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowNoFaceDialog(false)}>
+              เข้าใจแล้ว
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
