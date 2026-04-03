@@ -219,16 +219,18 @@ const cropFaceToCenter = (file: File, boundingBox: { x: number; y: number; width
         return;
       }
 
-      // Calculate crop area with padding (1.8x face size to include shoulders/background)
-      const padding = 1.8;
+      // Calculate crop area to fit face perfectly in green oval guide (55% width, 75% height)
       const faceWidth = boundingBox.width * img.width;
       const faceHeight = boundingBox.height * img.height;
       const faceCenterX = (boundingBox.x + boundingBox.width / 2) * img.width;
       const faceCenterY = (boundingBox.y + boundingBox.height / 2) * img.height;
       
-      // Crop dimensions (wider to fit oval guide which is 55% width, 75% height)
-      const cropWidth = faceWidth * padding;
-      const cropHeight = faceHeight * padding * 1.4; // Taller for oval shape
+      // Oval guide is 55% width, 75% height of preview
+      // Face should fill ~70% of the oval (leaving some margin)
+      // So crop should be: face size / 0.7 / oval percentage
+      const ovalFillRatio = 0.7; // Face fills 70% of oval
+      const cropWidth = (faceWidth / ovalFillRatio) / 0.55; // Oval is 55% of image width
+      const cropHeight = (faceHeight / ovalFillRatio) / 0.75; // Oval is 75% of image height
       
       // Calculate crop position (centered on face)
       let cropX = faceCenterX - cropWidth / 2;
@@ -724,8 +726,10 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
                       <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-0.5 bg-green-500"></div>
                     </div>
                     {/* Instruction text */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg text-sm text-center">
                       จัดตำแหน่งใบหน้าให้อยู่ในกรอบสีเขียว
+                      <br />
+                      เพื่อผลการวิเคราะห์ผิวหน้าได้อย่างแม่นยำ
                     </div>
                   </div>
                 )}
