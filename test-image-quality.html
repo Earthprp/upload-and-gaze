@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A5: Image Quality Impact Quantification</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        h1 { font-size: 26px; color: #1a1a2e; margin-bottom: 6px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+
+        .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .group-card {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .group-card.good  { border-color: #27ae60; background: #f0fff4; }
+        .group-card.under { border-color: #2980b9; background: #f0f8ff; }
+        .group-card.over  { border-color: #e67e22; background: #fffbf0; }
+
+        .group-card.dragover { opacity: 0.7; }
+
+        .group-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .group-title.good  { color: #27ae60; }
+        .group-title.under { color: #2980b9; }
+        .group-title.over  { color: #e67e22; }
+
+        .group-hint { font-size: 12px; color: #888; margin-bottom: 12px; }
+
+        .upload-area {
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255,255,255,0.6);
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            transition: background 0.2s;
+        }
+        .upload-area:hover { background: rgba(255,255,255,0.9); }
+
+        .thumbs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .thumb-item {
+            position: relative;
+            width: 64px;
+            height: 64px;
+        }
+
+        .thumb-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .thumb-item .lbl {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 10px;
+            text-align: center;
+            border-radius: 0 0 6px 6px;
+            padding: 1px 0;
+        }
+
+        .thumb-item .rm {
+            position: absolute;
+            top: -4px; right: -4px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px; height: 18px;
+            font-size: 12px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .run-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .run-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .run-btn:not(:disabled):hover { transform: translateY(-2px); }
+
+        .progress { display: none; margin-bottom: 20px; }
+        .progress.active { display: block; }
+        .progress-bar { background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e, #38ef7d);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        .progress-text { text-align: center; color: #666; font-size: 13px; margin-top: 6px; }
+
+        .results { display: none; }
+        .results.active { display: block; }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pdf-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 10px 22px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid #e8e8e8; font-size: 14px; }
+        th { font-weight: 600; color: white; }
+        tr:last-child td { border-bottom: none; }
+
+        .th-metric { background: #1a1a2e; }
+        .th-good   { background: #27ae60; }
+        .th-under  { background: #2980b9; }
+        .th-over   { background: #e67e22; }
+        .th-diff   { background: #8e44ad; }
+
+        .good-cell  { color: #27ae60; font-weight: 600; }
+        .under-cell { color: #2980b9; font-weight: 600; }
+        .over-cell  { color: #e67e22; font-weight: 600; }
+
+        .diff-low  { color: #27ae60; font-weight: 700; }
+        .diff-mid  { color: #f39c12; font-weight: 700; }
+        .diff-high { color: #e74c3c; font-weight: 700; }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 28px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .detail-card {
+            border-radius: 10px;
+            padding: 16px;
+            font-size: 13px;
+        }
+
+        .detail-card.good  { background: #f0fff4; border: 1px solid #27ae60; }
+        .detail-card.under { background: #f0f8ff; border: 1px solid #2980b9; }
+        .detail-card.over  { background: #fffbf0; border: 1px solid #e67e22; }
+
+        .detail-card h4 { margin-bottom: 10px; font-size: 14px; }
+        .detail-card h4.good  { color: #27ae60; }
+        .detail-card h4.under { color: #2980b9; }
+        .detail-card h4.over  { color: #e67e22; }
+
+        .detail-card table { box-shadow: none; margin: 0; }
+        .detail-card th, .detail-card td { padding: 6px 8px; font-size: 12px; }
+
+        .finding-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+        }
+        .finding-box h3 { color: #333; margin-bottom: 8px; font-size: 15px; }
+        .finding-box p  { color: #555; font-size: 14px; line-height: 1.7; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 20px; }
+            .groups-grid, .run-btn, .progress, .pdf-btn, .rm { display: none !important; }
+            .results { display: block !important; }
+            table { box-shadow: none; page-break-inside: avoid; }
+            th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔬 A5: Image Quality Impact Quantification</h1>
+    <p class="subtitle">Upload images grouped by brightness condition → run through n8n → compare score distributions</p>
+
+    <div class="groups-grid">
+        <!-- Good Lighting -->
+        <div class="group-card good" id="zone-good"
+             ondragover="handleDragOver(event,'good')"
+             ondragleave="handleDragLeave(event,'good')"
+             ondrop="handleDrop(event,'good')">
+            <div class="group-title good">☀️ Good Lighting</div>
+            <div class="group-hint">Brightness ~130</div>
+            <div class="upload-area" onclick="document.getElementById('input-good').click()">
+                ＋ Choose Images
+            </div>
+            <input type="file" id="input-good" accept="image/*" multiple style="display:none"
+                   onchange="handleFiles(this.files,'good')">
+            <div class="thumbs" id="thumbs-good"></div>
+        </div>
+
+        <!-- Underexposed -->
+        <div class="group-card under" id="zone-under"
+             ondragover="handleDragOver(event,'under')"
+             ondragleave="handleDragLeave(event,'under')"
+             ondrop="handleDrop(event,'under')">
+            <div class="group-title under">🌑 Underexposed</div>
+            <div class="group-hint">Brightness &lt; 100</div>
+            <div class="upload-area" onclick="document.getElementById('input-under').click()">
+                ＋ Choose Images
+            </div>
+            <input type="file" id="input-under" accept="image/*" multiple style="display:none"
+                   onchange="handleFiles(this.files,'under')">
+            <div class="thumbs" id="thumbs-under"></div>
+        </div>
+
+        <!-- Overexposed -->
+        <div class="group-card over" id="zone-over"
+             ondragover="handleDragOver(event,'over')"
+             ondragleave="handleDragLeave(event,'over')"
+             ondrop="handleDrop(event,'over')">
+            <div class="group-title over">💡 Overexposed</div>
+            <div class="group-hint">Brightness &gt; 160</div>
+            <div class="upload-area" onclick="document.getElementById('input-over').click()">
+                ＋ Choose Images
+            </div>
+            <input type="file" id="input-over" accept="image/*" multiple style="display:none"
+                   onchange="handleFiles(this.files,'over')">
+            <div class="thumbs" id="thumbs-over"></div>
+        </div>
+    </div>
+
+    <button class="run-btn" id="runBtn" disabled onclick="runTest()">
+        🚀 Run Image Quality Test
+    </button>
+
+    <div class="progress" id="progress">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <p class="progress-text" id="progressText">Initializing...</p>
+    </div>
+
+    <div class="results" id="results">
+        <div class="results-header">
+            <h2 style="font-size:20px; color:#1a1a2e;">📊 Results: Score Distribution by Brightness</h2>
+            <button class="pdf-btn" onclick="downloadPDF()">📄 Download PDF</button>
+        </div>
+
+        <!-- Summary comparison table -->
+        <div class="section-title">📈 Mean Score Comparison</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-metric">Metric</th>
+                    <th class="th-good">☀️ Good Lighting</th>
+                    <th class="th-under">🌑 Underexposed</th>
+                    <th class="th-over">💡 Overexposed</th>
+                    <th class="th-diff">Max Diff</th>
+                </tr>
+            </thead>
+            <tbody id="summaryBody"></tbody>
+        </table>
+
+        <!-- Per-group detail tables -->
+        <div class="section-title">📋 Detailed Scores per Image</div>
+        <div class="detail-grid" id="detailGrid"></div>
+
+        <!-- Finding -->
+        <div class="finding-box" id="findingBox">
+            <h3>🔍 Key Findings</h3>
+            <p id="findingText"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99';
+
+    const images = { good: [], under: [], over: [] };
+
+    const METRICS = [
+        { key: 'overallScore',    label: 'Overall Score' },
+        { key: 'smoothnessLevel', label: 'Smoothness Level' },
+        { key: 'hydrationLevel',  label: 'Hydration Level' },
+        { key: 'toneEvenness',    label: 'Tone Evenness' },
+        { key: 'detectionCounts', label: 'Detection Counts' },
+    ];
+
+    const GROUP_LABELS = { good: '☀️ Good', under: '🌑 Under', over: '💡 Over' };
+
+    // ── Drag & drop ──────────────────────────────
+    function handleDragOver(e, group) {
+        e.preventDefault();
+        document.getElementById('zone-' + group).classList.add('dragover');
+    }
+    function handleDragLeave(e, group) {
+        document.getElementById('zone-' + group).classList.remove('dragover');
+    }
+    function handleDrop(e, group) {
+        e.preventDefault();
+        document.getElementById('zone-' + group).classList.remove('dragover');
+        handleFiles(e.dataTransfer.files, group);
+    }
+
+    // ── File handling ─────────────────────────────
+    function handleFiles(files, group) {
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result.split(',')[1];
+                images[group].push({ file, dataUrl: e.target.result, base64 });
+                renderThumbs(group);
+                updateRunBtn();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderThumbs(group) {
+        const container = document.getElementById('thumbs-' + group);
+        container.innerHTML = '';
+        images[group].forEach((img, i) => {
+            const div = document.createElement('div');
+            div.className = 'thumb-item';
+            div.innerHTML = `
+                <img src="${img.dataUrl}" alt="">
+                <button class="rm" onclick="removeImage('${group}',${i})">×</button>
+                <div class="lbl">#${i + 1}</div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function removeImage(group, index) {
+        images[group].splice(index, 1);
+        renderThumbs(group);
+        updateRunBtn();
+    }
+
+    function updateRunBtn() {
+        const total = images.good.length + images.under.length + images.over.length;
+        document.getElementById('runBtn').disabled = total === 0;
+    }
+
+    // ── n8n Webhook call ──────────────────────────
+    async function callN8n(imageBase64, mimeType) {
+        const res = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_base64: imageBase64, mime_type: mimeType || 'image/jpeg' })
+        });
+        if (!res.ok) throw new Error(`n8n error ${res.status}`);
+        const text = await res.text();
+        if (!text || !text.trim()) throw new Error('n8n returned empty response');
+        const data = JSON.parse(text);
+        return Array.isArray(data) ? data[0] : data;
+    }
+
+    // ── Run test ──────────────────────────────────
+    async function runTest() {
+        const runBtn = document.getElementById('runBtn');
+        const progress = document.getElementById('progress');
+        const results = document.getElementById('results');
+
+        runBtn.disabled = true;
+        progress.classList.add('active');
+        results.classList.remove('active');
+
+        const groups = ['good', 'under', 'over'];
+        const allImages = groups.flatMap(g => images[g].map(img => ({ img, group: g })));
+        const total = allImages.length;
+        let done = 0;
+
+        const groupResults = { good: [], under: [], over: [] };
+
+        try {
+            for (const { img, group } of allImages) {
+                const idx = images[group].indexOf(img) + 1;
+                document.getElementById('progressText').textContent =
+                    `Analyzing ${GROUP_LABELS[group]} image ${idx}/${images[group].length}…`;
+
+                const result = await callN8n(img.base64, img.file.type);
+                groupResults[group].push(result);
+
+                done++;
+                const pct = Math.round((done / total) * 100);
+                document.getElementById('progressFill').style.width = pct + '%';
+                document.getElementById('progressFill').textContent = pct + '%';
+
+                await new Promise(r => setTimeout(r, 800));
+            }
+
+            displayResults(groupResults);
+            results.classList.add('active');
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            progress.classList.remove('active');
+            runBtn.disabled = false;
+        }
+    }
+
+    // ── Display results ───────────────────────────
+    function avg(arr) {
+        if (!arr.length) return null;
+        return arr.reduce((s, v) => s + (v || 0), 0) / arr.length;
+    }
+
+    function displayResults(gr) {
+        // ── Summary table ──
+        const tbody = document.getElementById('summaryBody');
+        tbody.innerHTML = '';
+
+        METRICS.forEach(m => {
+            const goodVals  = gr.good.map(r => r[m.key]).filter(v => v != null);
+            const underVals = gr.under.map(r => r[m.key]).filter(v => v != null);
+            const overVals  = gr.over.map(r => r[m.key]).filter(v => v != null);
+
+            const goodMean  = goodVals.length  ? avg(goodVals).toFixed(1)  : '—';
+            const underMean = underVals.length ? avg(underVals).toFixed(1) : '—';
+            const overMean  = overVals.length  ? avg(overVals).toFixed(1)  : '—';
+
+            const nums = [goodVals, underVals, overVals]
+                .filter(a => a.length)
+                .map(a => avg(a));
+            const diff = nums.length >= 2
+                ? (Math.max(...nums) - Math.min(...nums)).toFixed(1)
+                : '—';
+
+            const diffNum = parseFloat(diff);
+            let diffClass = 'diff-low';
+            if (diffNum >= 20) diffClass = 'diff-high';
+            else if (diffNum >= 10) diffClass = 'diff-mid';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${m.label}</strong></td>
+                <td class="good-cell">${goodMean}</td>
+                <td class="under-cell">${underMean}</td>
+                <td class="over-cell">${overMean}</td>
+                <td class="${diffClass}">${diff}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // ── Detail cards ──
+        const detailGrid = document.getElementById('detailGrid');
+        detailGrid.innerHTML = '';
+
+        const groupDefs = [
+            { key: 'good',  label: '☀️ Good Lighting', cls: 'good' },
+            { key: 'under', label: '🌑 Underexposed',   cls: 'under' },
+            { key: 'over',  label: '💡 Overexposed',    cls: 'over' },
+        ];
+
+        groupDefs.forEach(gd => {
+            const card = document.createElement('div');
+            card.className = `detail-card ${gd.cls}`;
+
+            const rows = gr[gd.key].map((r, i) => `
+                <tr>
+                    <td>Img ${i + 1}</td>
+                    <td>${r.overallScore ?? '—'}</td>
+                    <td>${r.smoothnessLevel ?? '—'}</td>
+                    <td>${r.hydrationLevel ?? '—'}</td>
+                    <td>${r.toneEvenness ?? '—'}</td>
+                    <td>${r.detectionCounts ?? '—'}</td>
+                </tr>
+            `).join('');
+
+            card.innerHTML = `
+                <h4 class="${gd.cls}">${gd.label} (${gr[gd.key].length} images)</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="background:#555">Img</th>
+                            <th style="background:#555">OvAll</th>
+                            <th style="background:#555">Smooth</th>
+                            <th style="background:#555">Hydra</th>
+                            <th style="background:#555">Tone</th>
+                            <th style="background:#555">Detect</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows || '<tr><td colspan="6" style="color:#aaa">No images</td></tr>'}</tbody>
+                </table>
+            `;
+            detailGrid.appendChild(card);
+        });
+
+        // ── Key finding ──
+        generateFinding(gr);
+    }
+
+    function generateFinding(gr) {
+        const lines = [];
+        METRICS.forEach(m => {
+            const goodMean  = avg(gr.good.map(r => r[m.key]).filter(v => v != null));
+            const underMean = avg(gr.under.map(r => r[m.key]).filter(v => v != null));
+            const overMean  = avg(gr.over.map(r => r[m.key]).filter(v => v != null));
+            const vals = [goodMean, underMean, overMean].filter(v => v != null);
+            if (vals.length < 2) return;
+            const diff = Math.max(...vals) - Math.min(...vals);
+            if (diff >= 10) {
+                lines.push(`${m.label} showed high sensitivity (Δ = ${diff.toFixed(1)}) across brightness conditions.`);
+            }
+        });
+
+        const goodAvg  = avg(gr.good.map(r => r.overallScore).filter(v => v != null));
+        const underAvg = avg(gr.under.map(r => r.overallScore).filter(v => v != null));
+        const overAvg  = avg(gr.over.map(r => r.overallScore).filter(v => v != null));
+
+        const scores = [
+            goodAvg  != null ? `Good Lighting: ${goodAvg.toFixed(1)}`   : null,
+            underAvg != null ? `Underexposed: ${underAvg.toFixed(1)}`   : null,
+            overAvg  != null ? `Overexposed: ${overAvg.toFixed(1)}`     : null,
+        ].filter(Boolean);
+
+        let finding = `Overall Score averages — ${scores.join(' | ')}. `;
+
+        if (lines.length) {
+            finding += lines.join(' ');
+        } else {
+            finding += 'No metric exceeded Δ = 10, suggesting the system is relatively robust to brightness variation.';
+        }
+
+        document.getElementById('findingText').textContent = finding;
+    }
+
+    function downloadPDF() {
+        const ts = new Date().toLocaleString('th-TH');
+        const h1 = document.querySelector('h1');
+        const orig = h1.textContent;
+        h1.textContent = `A5: Image Quality Impact Quantification — ${ts}`;
+        window.print();
+        h1.textContent = orig;
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A4: Prompt Ablation Study</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        h1 { font-size: 24px; color: #0f2027; margin-bottom: 6px; }
+        .subtitle { color: #666; font-size: 13px; margin-bottom: 28px; }
+
+        .config-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .config-row label { font-size: 13px; font-weight: 600; color: #444; display: block; margin-bottom: 4px; }
+        .config-row input {
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            width: 380px;
+        }
+
+        .upload-section {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafafa;
+            margin-bottom: 24px;
+            transition: border-color 0.2s;
+        }
+        .upload-section:hover { border-color: #667eea; }
+        .upload-section.dragover { border-color: #667eea; background: #f0f2ff; }
+        .upload-section p { color: #666; font-size: 14px; margin-bottom: 10px; }
+
+        .images-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+        .img-thumb { position: relative; width: 70px; height: 70px; }
+        .img-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+        .img-thumb .lbl {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.6); color: white;
+            font-size: 10px; text-align: center; border-radius: 0 0 8px 8px; padding: 2px 0;
+        }
+        .img-thumb .rm {
+            position: absolute; top: -4px; right: -4px;
+            background: #e74c3c; color: white; border: none;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 12px; cursor: pointer; line-height: 1;
+        }
+
+        .variants-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .variant-card {
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 12px;
+        }
+        .v1 { background: #f0f0ff; border: 1px solid #667eea; }
+        .v2 { background: #f0fff8; border: 1px solid #00b894; }
+        .v3 { background: #fff5f5; border: 1px solid #e17055; }
+
+        .variant-card h4 { font-size: 13px; margin-bottom: 6px; }
+        .v1 h4 { color: #667eea; }
+        .v2 h4 { color: #00b894; }
+        .v3 h4 { color: #e17055; }
+        .variant-card ul { padding-left: 16px; color: #555; line-height: 1.7; }
+
+        .run-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .run-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .run-btn:not(:disabled):hover { transform: translateY(-2px); }
+
+        .progress { display: none; margin-bottom: 20px; }
+        .progress.active { display: block; }
+        .progress-bar { background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden; }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; color: white; font-size: 12px;
+            font-weight: 600; transition: width 0.3s; width: 0%;
+        }
+        .progress-text { text-align: center; color: #666; font-size: 13px; margin-top: 6px; }
+
+        .results { display: none; }
+        .results.active { display: block; }
+
+        .results-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 20px;
+        }
+        .pdf-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white; padding: 10px 22px; border: none;
+            border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 16px; font-weight: 700; color: #0f2027;
+            margin: 24px 0 12px 0; padding-bottom: 6px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        table {
+            width: 100%; border-collapse: collapse; margin-bottom: 24px;
+            border-radius: 10px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+        th { font-weight: 600; color: white; }
+        tr:last-child td { border-bottom: none; }
+
+        .th-dark { background: #2c3e50; }
+        .th-v1   { background: #667eea; }
+        .th-v2   { background: #00b894; }
+        .th-v3   { background: #e17055; }
+
+        .v1-val { color: #667eea; font-weight: 600; }
+        .v2-val { color: #00b894; font-weight: 600; }
+        .v3-val { color: #e17055; font-weight: 600; }
+
+        .winner { background: #fffde7; }
+        .best-tag {
+            display: inline-block; background: #f39c12;
+            color: white; font-size: 10px; font-weight: 700;
+            padding: 1px 6px; border-radius: 4px; margin-left: 4px;
+        }
+
+        .low  { color: #27ae60; font-weight: 700; }
+        .mid  { color: #f39c12; font-weight: 700; }
+        .high { color: #e74c3c; font-weight: 700; }
+
+        .detail-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .tab-btn {
+            padding: 8px 18px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 600;
+            transition: transform 0.1s;
+        }
+        .tab-btn.active { transform: translateY(-2px); color: white; }
+        .tab-btn.t1 { background: #e8e8ff; color: #667eea; }
+        .tab-btn.t1.active { background: #667eea; color: white; }
+        .tab-btn.t2 { background: #e0fff5; color: #00b894; }
+        .tab-btn.t2.active { background: #00b894; color: white; }
+        .tab-btn.t3 { background: #ffe8e0; color: #e17055; }
+        .tab-btn.t3.active { background: #e17055; color: white; }
+
+        .detail-panel { display: none; }
+        .detail-panel.active { display: block; }
+
+        .analysis-list { margin-top: 20px; }
+        .analysis-item {
+            border: 1px solid #e0e0e0; border-radius: 8px;
+            margin-bottom: 10px; overflow: hidden;
+        }
+        .analysis-header {
+            padding: 10px 14px; background: #f5f5f5;
+            display: flex;
+            justify-content: space-between; align-items: center;
+            font-size: 13px; font-weight: 600;
+        }
+        .analysis-body {
+            display: block; padding: 14px 16px;
+            background: white; font-size: 13px;
+        }
+        .analysis-body .field-row {
+            margin-bottom: 8px; line-height: 1.6;
+        }
+        .analysis-body .field-label {
+            font-weight: 600; color: #555; min-width: 120px;
+            display: inline-block;
+        }
+        .issue-tag {
+            display: inline-block; padding: 2px 8px;
+            border-radius: 4px; font-size: 11px; font-weight: 600;
+            margin: 2px 3px 2px 0;
+        }
+        .sev-perfect { background: #d5f5e3; color: #1e8449; }
+        .sev-low     { background: #d6eaf8; color: #1a5276; }
+        .sev-medium  { background: #fef9e7; color: #9a7d0a; }
+        .sev-high    { background: #fadbd8; color: #922b21; }
+
+        .finding-box {
+            background: #f8f9ff; border-left: 4px solid #667eea;
+            padding: 16px 20px; border-radius: 0 8px 8px 0; margin-top: 20px;
+        }
+        .finding-box h3 { color: #333; margin-bottom: 8px; font-size: 15px; }
+        .finding-box p  { color: #555; font-size: 14px; line-height: 1.8; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 20px; }
+            .upload-section, .images-grid, .run-btn, .progress,
+            .pdf-btn, .rm, .config-row, .detail-tabs { display: none !important; }
+            .results, .detail-panel { display: block !important; }
+            table { box-shadow: none; page-break-inside: avoid; }
+            th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧪 A4: Prompt Ablation Study</h1>
+    <p class="subtitle">Test 3 prompt variants on the same images — compare output consistency, field completeness, and scoring variance</p>
+
+    <div class="config-row">
+        <div>
+            <label>n8n Webhook URL</label>
+            <input type="text" id="webhookUrl" placeholder="http://localhost:5678/webhook/..." value="http://localhost:5678/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99" style="width:500px">
+        </div>
+    </div>
+
+    <!-- Prompt variant descriptions -->
+    <div class="variants-info">
+        <div class="variant-card v1">
+            <h4>📋 Variant 1: Full Prompt</h4>
+            <ul>
+                <li>Role as dermatologist expert</li>
+                <li>Context injection (age/gender awareness)</li>
+                <li>Chain-of-Thought steps</li>
+                <li>Full JSON schema</li>
+            </ul>
+        </div>
+        <div class="variant-card v2">
+            <h4>👤 Variant 2: Role Only</h4>
+            <ul>
+                <li>Role as dermatologist expert</li>
+                <li>No context injection</li>
+                <li>No Chain-of-Thought</li>
+                <li>JSON schema only</li>
+            </ul>
+        </div>
+        <div class="variant-card v3">
+            <h4>⚪ Variant 3: No Role (Baseline)</h4>
+            <ul>
+                <li>No role definition</li>
+                <li>No context injection</li>
+                <li>No Chain-of-Thought</li>
+                <li>Minimal instruction + JSON</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Upload -->
+    <div class="upload-section" id="uploadSection"
+         ondragover="event.preventDefault(); this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="handleDrop(event)">
+        <p>📸 Upload images (same images used for all 3 variants)</p>
+        <button style="padding:8px 20px; border:1px solid #667eea; background:#f0f0ff; color:#667eea; border-radius:6px; cursor:pointer; font-weight:600"
+                onclick="document.getElementById('fileInput').click()">Choose Images</button>
+        <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+        <div class="images-grid" id="imagesGrid"></div>
+    </div>
+
+    <button class="run-btn" id="runBtn" disabled onclick="runTest()">
+        🚀 Run Prompt Ablation Test
+    </button>
+
+    <div class="progress" id="progress">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <p class="progress-text" id="progressText">Initializing...</p>
+    </div>
+
+    <div class="results" id="results">
+        <div class="results-header">
+            <h2 style="font-size:20px; color:#0f2027;">📊 Ablation Study Results</h2>
+            <button class="pdf-btn" onclick="downloadPDF()">📄 Download PDF</button>
+        </div>
+
+        <!-- Key metrics comparison -->
+        <div class="section-title">🏆 Key Metrics Comparison</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-dark">Metric</th>
+                    <th class="th-v1">📋 Full Prompt</th>
+                    <th class="th-v2">👤 Role Only</th>
+                    <th class="th-v3">⚪ No Role</th>
+                </tr>
+            </thead>
+            <tbody id="metricsBody"></tbody>
+        </table>
+
+        <!-- Score comparison -->
+        <div class="section-title">📈 Mean Score Comparison</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-dark">Score Metric</th>
+                    <th class="th-v1">📋 Full Prompt</th>
+                    <th class="th-v2">👤 Role Only</th>
+                    <th class="th-v3">⚪ No Role</th>
+                </tr>
+            </thead>
+            <tbody id="scoresBody"></tbody>
+        </table>
+
+        <!-- Per-image detail tables -->
+        <div class="section-title">📋 Per-Image Detailed Scores</div>
+        <div class="detail-tabs">
+            <button class="tab-btn t1 active" onclick="showTab(1)">📋 Full Prompt</button>
+            <button class="tab-btn t2" onclick="showTab(2)">👤 Role Only</button>
+            <button class="tab-btn t3" onclick="showTab(3)">⚪ No Role</button>
+        </div>
+        <div class="detail-panel active" id="panel1"></div>
+        <div class="detail-panel" id="panel2"></div>
+        <div class="detail-panel" id="panel3"></div>
+
+        <!-- Finding -->
+        <div class="finding-box">
+            <h3>🔍 Key Findings</h3>
+            <p id="findingText"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    const EXPECTED_FIELDS = ['skinType','overallScore','smoothnessLevel','hydrationLevel',
+                             'toneEvenness','detectionCounts','overallSeverity','overallAssessment'];
+
+    const SCORE_METRICS = [
+        { key: 'overallScore',    label: 'Overall Score' },
+        { key: 'smoothnessLevel', label: 'Smoothness Level' },
+        { key: 'hydrationLevel',  label: 'Hydration Level' },
+        { key: 'toneEvenness',    label: 'Tone Evenness' },
+        { key: 'detectionCounts', label: 'Detection Counts' },
+    ];
+
+    // ── Prompts ─────────────────────────────────────────────────────────────
+    function buildPrompt(variant) {
+        const jsonSchema = `Return ONLY valid JSON (no markdown, no explanation):
+{"skinType":"string","overallScore":number,"smoothnessLevel":number,"hydrationLevel":number,"toneEvenness":number,"detectionCounts":number,"overallSeverity":"mild/moderate/severe","overallAssessment":"string"}`;
+
+        if (variant === 1) {
+            return `คุณเป็นผู้เชี่ยวชาญด้านผิวหนังและการวิเคราะห์ภาพถ่ายทางการแพทย์ มีประสบการณ์มากกว่า 10 ปีในการวินิจฉัยสภาพผิวหนังจากภาพถ่าย
+
+ก่อนตอบ ให้วิเคราะห์ภาพอย่างเป็นขั้นตอนดังนี้:
+1. สังเกตลักษณะผิวโดยรวม (สีผิว ความมัน ความแห้ง ความหยาบ)
+2. ระบุปัญหาเฉพาะจุดที่มองเห็น (สิว รูขุมขน จุดด่างดำ รอยแดง ริ้วรอย)
+3. ประเมินระดับความชุ่มชื้นของผิว
+4. ประเมินความสม่ำเสมอของสีผิว
+5. นับและประเมินความรุนแรงของปัญหาที่พบ
+6. สรุปสุขภาพผิวโดยรวมด้วยคะแนน 0-100
+
+${jsonSchema}`;
+        }
+
+        if (variant === 2) {
+            return `คุณเป็นผู้เชี่ยวชาญด้านผิวหนัง วิเคราะห์ภาพผิวหน้านี้และประเมินสุขภาพผิว
+
+${jsonSchema}`;
+        }
+
+        // variant 3 — no role, English baseline
+        return `analyze this skin image and return JSON only.
+Fields: skinType, overallScore (0-100), smoothnessLevel (0-100), hydrationLevel (0-100), toneEvenness (0-100), detectionCounts (integer), overallSeverity (mild/moderate/severe), overallAssessment (string).
+${jsonSchema}`;
+    }
+
+    // ── Image handling ───────────────────────────────────────────────────────
+    let selectedImages = [];
+
+    function handleDrop(e) {
+        e.preventDefault();
+        document.getElementById('uploadSection').classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    }
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                selectedImages.push({ file, dataUrl: e.target.result, base64: e.target.result.split(',')[1] });
+                renderGrid();
+                document.getElementById('runBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('imagesGrid');
+        grid.innerHTML = '';
+        selectedImages.forEach((img, i) => {
+            const d = document.createElement('div');
+            d.className = 'img-thumb';
+            d.innerHTML = `<img src="${img.dataUrl}"><button class="rm" onclick="removeImg(${i})">×</button><div class="lbl">Img ${i+1}</div>`;
+            grid.appendChild(d);
+        });
+    }
+
+    function removeImg(i) {
+        selectedImages.splice(i, 1);
+        renderGrid();
+        document.getElementById('runBtn').disabled = selectedImages.length === 0;
+    }
+
+    // ── n8n Webhook call ──────────────────────────────────────────────────────
+    async function callN8n(base64, mimeType, variant) {
+        const webhookUrl = document.getElementById('webhookUrl').value.trim();
+        
+        const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image_base64: base64,
+                mime_type: mimeType || 'image/jpeg',
+                prompt_variant: variant
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error(`n8n webhook error: ${res.status} ${res.statusText}`);
+        }
+
+        const text = await res.text();
+        if (!text || !text.trim()) {
+            throw new Error('n8n returned empty response');
+        }
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error(`n8n response is not valid JSON: ${text.substring(0, 200)}`);
+        }
+
+        const result = Array.isArray(data) ? data[0] : data;
+        return { raw: JSON.stringify(result), parsed: result };
+    }
+
+    function tryParseJSON(text) {
+        try {
+            const m = text.match(/\{[\s\S]*\}/);
+            return m ? JSON.parse(m[0]) : null;
+        } catch { return null; }
+    }
+
+    // ── Run test ─────────────────────────────────────────────────────────────
+    async function runTest() {
+        const runBtn = document.getElementById('runBtn');
+        const progress = document.getElementById('progress');
+        const results = document.getElementById('results');
+
+        runBtn.disabled = true;
+        progress.classList.add('active');
+        results.classList.remove('active');
+
+        const variantResults = { 1: [], 2: [], 3: [] };
+        const total = selectedImages.length * 3;
+        let done = 0;
+
+        const variantNames = { 1: 'Full Prompt', 2: 'Role Only', 3: 'No Role' };
+
+        try {
+            for (let v = 1; v <= 3; v++) {
+                for (let i = 0; i < selectedImages.length; i++) {
+                    document.getElementById('progressText').textContent =
+                        `Variant ${v}/3 (${variantNames[v]}) — Image ${i+1}/${selectedImages.length}`;
+
+                    const img = selectedImages[i];
+                    const result = await callN8n(img.base64, img.file.type, v);
+                    variantResults[v].push(result);
+
+                    done++;
+                    const pct = Math.round((done / total) * 100);
+                    document.getElementById('progressFill').style.width = pct + '%';
+                    document.getElementById('progressFill').textContent = pct + '%';
+
+                    await new Promise(r => setTimeout(r, 600));
+                }
+            }
+
+            displayResults(variantResults);
+            results.classList.add('active');
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            progress.classList.remove('active');
+            runBtn.disabled = false;
+        }
+    }
+
+    // ── Stats helpers ────────────────────────────────────────────────────────
+    function mean(arr) {
+        const v = arr.filter(x => x != null && !isNaN(x));
+        return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+    }
+
+    function sd(arr) {
+        const v = arr.filter(x => x != null && !isNaN(x));
+        if (v.length < 2) return 0;
+        const m = mean(v);
+        return Math.sqrt(v.reduce((s, x) => s + Math.pow(x - m, 2), 0) / v.length);
+    }
+
+    function fieldCompleteness(results) {
+        if (!results.length) return 0;
+        const rates = results.map(r => {
+            if (!r.parsed) return 0;
+            const present = EXPECTED_FIELDS.filter(f => r.parsed[f] != null).length;
+            return (present / EXPECTED_FIELDS.length) * 100;
+        });
+        return mean(rates);
+    }
+
+    function parseSuccessRate(results) {
+        return (results.filter(r => r.parsed != null).length / results.length) * 100;
+    }
+
+    function avgSD(results) {
+        const scoreKeys = ['overallScore','smoothnessLevel','hydrationLevel','toneEvenness'];
+        const sds = scoreKeys.map(k => sd(results.map(r => r.parsed?.[k]).filter(v => v != null)));
+        return mean(sds);
+    }
+
+    // ── Display ───────────────────────────────────────────────────────────────
+    function displayResults(vr) {
+        const stats = {};
+        [1, 2, 3].forEach(v => {
+            stats[v] = {
+                parseRate: parseSuccessRate(vr[v]),
+                completeness: fieldCompleteness(vr[v]),
+                avgSD: avgSD(vr[v]),
+            };
+        });
+
+        // ── Key metrics table ──
+        const metricsBody = document.getElementById('metricsBody');
+        const metricRows = [
+            { label: '✅ Parse Success Rate', key: 'parseRate', unit: '%', higherBetter: true },
+            { label: '📋 Field Completeness Rate', key: 'completeness', unit: '%', higherBetter: true },
+            { label: '📉 Avg Scoring SD (lower=more consistent)', key: 'avgSD', unit: '', higherBetter: false },
+        ];
+
+        metricRows.forEach(m => {
+            const vals = [stats[1][m.key], stats[2][m.key], stats[3][m.key]];
+            const best = m.higherBetter ? Math.max(...vals) : Math.min(...vals);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${m.label}</strong></td>
+                ${[1,2,3].map((v,i) => {
+                    const val = vals[i];
+                    const isBest = Math.abs(val - best) < 0.001;
+                    const cls = ['v1-val','v2-val','v3-val'][i];
+                    const tag = isBest ? '<span class="best-tag">BEST</span>' : '';
+                    const rowCls = isBest ? ' class="winner"' : '';
+                    return `<td${rowCls} class="${cls}">${val.toFixed(1)}${m.unit}${tag}</td>`;
+                }).join('')}
+            `;
+            metricsBody.appendChild(tr);
+        });
+
+        // ── Score comparison table ──
+        const scoresBody = document.getElementById('scoresBody');
+        SCORE_METRICS.forEach(m => {
+            const vals = [1,2,3].map(v =>
+                mean(vr[v].map(r => r.parsed?.[m.key]).filter(x => x != null))
+            );
+            const best = Math.max(...vals.filter(v => v != null));
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${m.label}</strong></td>
+                ${vals.map((val, i) => {
+                    if (val == null) return `<td class="${['v1-val','v2-val','v3-val'][i]}">—</td>`;
+                    const isBest = Math.abs(val - best) < 0.01;
+                    const tag = isBest ? '<span class="best-tag">BEST</span>' : '';
+                    const sdVal = sd(vr[i+1].map(r => r.parsed?.[m.key]).filter(x => x != null));
+                    const sdCls = sdVal < 5 ? 'low' : sdVal < 10 ? 'mid' : 'high';
+                    return `<td class="${['v1-val','v2-val','v3-val'][i]}">${val.toFixed(1)} <small style="font-weight:400;color:#999">±<span class="${sdCls}">${sdVal.toFixed(1)}</span></small>${tag}</td>`;
+                }).join('')}
+            `;
+            scoresBody.appendChild(tr);
+        });
+
+        // ── Detail panels ──
+        [1,2,3].forEach(v => {
+            const panel = document.getElementById('panel' + v);
+            const cls = ['','v1-val','v2-val','v3-val'][v];
+            const rows = vr[v].map((r, i) => {
+                const p = r.parsed;
+                const comp = p ? Math.round((EXPECTED_FIELDS.filter(f => p[f] != null).length / EXPECTED_FIELDS.length) * 100) : 0;
+                return `<tr>
+                    <td>Img ${i+1}</td>
+                    <td>${p ? '<span style="color:#27ae60">✓</span>' : '<span style="color:#e74c3c">✗</span>'}</td>
+                    <td>${comp}%</td>
+                    <td>${p?.overallScore ?? '—'}</td>
+                    <td>${p?.smoothnessLevel ?? '—'}</td>
+                    <td>${p?.hydrationLevel ?? '—'}</td>
+                    <td>${p?.toneEvenness ?? '—'}</td>
+                    <td>${p?.detectionCounts ?? '—'}</td>
+                    <td>${p?.overallSeverity ?? '—'}</td>
+                </tr>`;
+            }).join('');
+
+            // Analysis output accordion per image
+            const analysisItems = vr[v].map((r, i) => {
+                const p = r.parsed;
+                if (!p) return `
+                    <div class="analysis-item">
+                        <div class="analysis-header">
+                            <span>📷 Image ${i+1}</span>
+                            <span style="color:#e74c3c">✗ Parse Failed</span>
+                        </div>
+                    </div>`;
+
+                const issues = Array.isArray(p.detectedIssues) ? p.detectedIssues : [];
+                const issueTags = issues.map(issue => {
+                    const sevCls = `sev-${issue.severity || 'low'}`;
+                    return `<span class="issue-tag ${sevCls}">${issue.issueName || '?'} (${issue.severity || '?'})</span>`;
+                }).join('');
+
+                const recList = (p.skincareRecommendations || []).slice(0, 3)
+                    .map(r => `<li>${r}</li>`).join('');
+
+                return `
+                    <div class="analysis-item">
+                        <div class="analysis-header">
+                            <span>📷 Image ${i+1} — ${p.skinType || '?'} | Score: ${p.overallScore ?? '—'} | Severity: ${p.overallSeverity || '—'}</span>
+                        </div>
+                        <div class="analysis-body">
+                            <div class="field-row">
+                                <span class="field-label">Overall Assessment:</span>
+                                ${p.overallAssessment || '—'}
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label">Skin Type:</span>
+                                ${p.skinType || '—'}
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label">Detected Issues (${issues.length}):</span><br>
+                                ${issueTags || '<span style="color:#aaa">none</span>'}
+                            </div>
+                            ${recList ? `<div class="field-row">
+                                <span class="field-label">Care Tips:</span>
+                                <ul style="margin:4px 0 0 18px;color:#555">${recList}</ul>
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
+
+            panel.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="th-dark">Image</th>
+                            <th class="th-dark">Parse</th>
+                            <th class="th-dark">Completeness</th>
+                            <th class="th-dark">Overall</th>
+                            <th class="th-dark">Smooth</th>
+                            <th class="th-dark">Hydra</th>
+                            <th class="th-dark">Tone</th>
+                            <th class="th-dark">Detect</th>
+                            <th class="th-dark">Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div class="analysis-list">
+                    <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">📝 Analysis Output per Image</div>
+                    ${analysisItems}
+                </div>
+            `;
+        });
+
+        generateFinding(stats, vr);
+    }
+
+    function generateFinding(stats, vr) {
+        const lines = [];
+        // Parse rate
+        const parseRates = [stats[1].parseRate, stats[2].parseRate, stats[3].parseRate];
+        const bestParseV = parseRates.indexOf(Math.max(...parseRates)) + 1;
+        lines.push(`Parse success rate: Full=${parseRates[0].toFixed(0)}%, Role Only=${parseRates[1].toFixed(0)}%, No Role=${parseRates[2].toFixed(0)}% → Variant ${bestParseV} had highest parse rate.`);
+
+        // Completeness
+        const comp = [stats[1].completeness, stats[2].completeness, stats[3].completeness];
+        const bestCompV = comp.indexOf(Math.max(...comp)) + 1;
+        lines.push(`Field completeness: Full=${comp[0].toFixed(0)}%, Role Only=${comp[1].toFixed(0)}%, No Role=${comp[2].toFixed(0)}% → Variant ${bestCompV} most complete.`);
+
+        // SD
+        const sds = [stats[1].avgSD, stats[2].avgSD, stats[3].avgSD];
+        const bestSDV = sds.indexOf(Math.min(...sds)) + 1;
+        lines.push(`Scoring consistency (lower SD = better): Full=${sds[0].toFixed(1)}, Role Only=${sds[1].toFixed(1)}, No Role=${sds[2].toFixed(1)} → Variant ${bestSDV} most consistent.`);
+
+        // Overall score difference
+        const ovScores = [1,2,3].map(v => mean(vr[v].map(r => r.parsed?.overallScore).filter(x => x != null)));
+        const validOv = ovScores.filter(v => v != null);
+        if (validOv.length >= 2) {
+            const diff = (Math.max(...validOv) - Math.min(...validOv)).toFixed(1);
+            lines.push(`Overall score range across variants: Δ = ${diff} points (Full=${ovScores[0]?.toFixed(1) ?? '—'}, Role Only=${ovScores[1]?.toFixed(1) ?? '—'}, No Role=${ovScores[2]?.toFixed(1) ?? '—'}).`);
+        }
+
+        document.getElementById('findingText').textContent = lines.join(' ');
+    }
+
+    function toggleAnalysis(header) {
+        const body = header.nextElementSibling;
+        const toggle = header.querySelector('.toggle');
+        const isOpen = body.classList.toggle('open');
+        toggle.textContent = isOpen ? '▲ Hide' : '▼ Show';
+    }
+
+    function showTab(v) {
+        [1,2,3].forEach(i => {
+            document.getElementById('panel' + i).classList.toggle('active', i === v);
+            document.querySelectorAll('.tab-btn')[i-1].classList.toggle('active', i === v);
+        });
+    }
+
+    function downloadPDF() {
+        const ts = new Date().toLocaleString('th-TH');
+        const h1 = document.querySelector('h1');
+        const orig = h1.textContent;
+        h1.textContent = `A4: Prompt Ablation Study — ${ts}`;
+        window.print();
+        h1.textContent = orig;
+    }
+</script>
+</body>
+</html>

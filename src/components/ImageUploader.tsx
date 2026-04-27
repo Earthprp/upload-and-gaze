@@ -80,7 +80,7 @@ const autoAdjustImage = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2
   
   // If image is too bright (>140), apply stronger reduction
   if (avgBrightness > 140) {
-    brightnessAdjust *= 1.8; // 80% more aggressive
+    brightnessAdjust *= 0.8; 
   }
   // If image is too dark (<80), apply stronger increase
   else if (avgBrightness < 80) {
@@ -279,6 +279,74 @@ const cropFaceToCenter = (file: File, boundingBox: { x: number; y: number; width
   });
 };
 
+// ─── Image Quality Gate ─────────────────────────────────────────────────────
+const BLUR_THRESHOLD = 80;   // Laplacian variance < this → blurry
+const BRIGHT_MIN     = 90;   // Avg brightness < this → too dark
+const BRIGHT_MAX     = 170;  // Avg brightness > this → too bright
+
+const checkImageQuality = (file: File): Promise<{ pass: boolean; blurFail: boolean; brightnessFail: boolean; reasons: string[]; blur: number; brightness: number }> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // Downsample for speed
+      const scale = Math.min(1, 400 / Math.max(img.width, img.height));
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+
+      const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Convert to grayscale
+      const gray = new Float32Array(width * height);
+      let totalBright = 0;
+      for (let i = 0; i < width * height; i++) {
+        const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
+        gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+        totalBright += gray[i];
+      }
+      const avgBrightness = totalBright / (width * height);
+
+      // Laplacian variance (kernel: [0,1,0,1,-4,1,0,1,0])
+      const kernel = [0, 1, 0, 1, -4, 1, 0, 1, 0];
+      let lapSum = 0, lapSumSq = 0, lapCount = 0;
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          let v = 0;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              v += gray[(y + dy) * width + (x + dx)] * kernel[(dy + 1) * 3 + (dx + 1)];
+            }
+          }
+          lapSum += v;
+          lapSumSq += v * v;
+          lapCount++;
+        }
+      }
+      const lapMean = lapSum / lapCount;
+      const lapVariance = lapSumSq / lapCount - lapMean * lapMean;
+
+      const blurReasons: string[] = [];
+      const brightnessReasons: string[] = [];
+      if (lapVariance < BLUR_THRESHOLD)
+        blurReasons.push(`ภาพเบลอเกินไป (blur score: ${lapVariance.toFixed(1)} < ${BLUR_THRESHOLD})`);
+      if (avgBrightness < BRIGHT_MIN)
+        brightnessReasons.push(`ภาพมืดเกินไป (brightness: ${avgBrightness.toFixed(1)}) — ระบบจะปรับแสงให้อัตโนมัติ`);
+      if (avgBrightness > BRIGHT_MAX)
+        brightnessReasons.push(`ภาพสว่างเกินไป (brightness: ${avgBrightness.toFixed(1)}) — ระบบจะปรับแสงให้อัตโนมัติ`);
+
+      const reasons = [...blurReasons, ...brightnessReasons];
+      console.log('🔍 Quality Gate:', { blur: lapVariance.toFixed(1), brightness: avgBrightness.toFixed(1), blurReasons, brightnessReasons });
+      resolve({ pass: blurReasons.length === 0 && brightnessReasons.length === 0, blurFail: blurReasons.length > 0, brightnessFail: brightnessReasons.length > 0, reasons, blur: lapVariance, brightness: avgBrightness });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ pass: true, blurFail: false, brightnessFail: false, reasons: [], blur: 0, brightness: 0 }); };
+    img.src = url;
+  });
+};
+
 // Function to resize image to max 1024x768 while maintaining aspect ratio
 const resizeImage = (file: File): Promise<File> => {
   return new Promise((resolve) => {
@@ -382,6 +450,10 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
   const [skinAnalysis, setSkinAnalysis] = useState<SkinAnalysisData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showNoFaceDialog, setShowNoFaceDialog] = useState(false);
+  const [showQualityWarning, setShowQualityWarning] = useState(false);
+  const [qualityWarningMsg, setQualityWarningMsg] = useState<string[]>([]);
+  const [showBrightnessWarning, setShowBrightnessWarning] = useState(false);
+  const [brightnessWarningMsg, setBrightnessWarningMsg] = useState<string[]>([]);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -557,11 +629,28 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
         finalFile = await cropFaceToCenter(processedFile, faceResult.boundingBox);
       }
 
+      // Quality Gate check
+      toast.info("Checking image quality...");
+      const quality = await checkImageQuality(finalFile);
+      if (quality.blurFail) {
+        setQualityWarningMsg(quality.reasons.filter(r => r.includes('เบลอ')));
+        setPendingFile(finalFile);
+        const imageUrl = URL.createObjectURL(finalFile);
+        setSelectedImage(imageUrl);
+        setShowQualityWarning(true);
+        return;
+      }
       // Show preview with overlay
       setPendingFile(finalFile);
       const imageUrl = URL.createObjectURL(finalFile);
       setSelectedImage(imageUrl);
-      toast.success("พบใบหน้าแล้ว! กรุณาตรวจสอบตำแหน่งในกรอบ");
+
+      if (quality.brightnessFail) {
+        setBrightnessWarningMsg(quality.reasons.filter(r => !r.includes('เบลอ')));
+        setShowBrightnessWarning(true);
+      } else {
+        toast.success("พบใบหน้าแล้ว! กรุณาตรวจสอบตำแหน่งในกรอบ");
+      }
     } catch (error) {
       console.error('Error processing image:', error);
       toast.error('Failed to process image');
@@ -942,6 +1031,76 @@ const ImageUploader = ({ onAnalysisComplete }: ImageUploaderProps) => {
 
         </>
       )}
+
+      {/* Brightness Warning Dialog */}
+      <AlertDialog open={showBrightnessWarning} onOpenChange={setShowBrightnessWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ แสงไม่เหมาะสม</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <ul className="list-disc list-inside space-y-1 mb-3">
+                  {brightnessWarningMsg.map((msg, i) => (
+                    <li key={i} className="text-sm font-medium">{msg}</li>
+                  ))}
+                </ul>
+                <p className="text-sm">ระบบจะปรับแสงให้อัตโนมัติ คุณสามารถดำเนินการต่อหรือเลือกรูปใหม่ได้</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              onClick={() => {
+                setShowBrightnessWarning(false);
+                setSelectedImage(null);
+                setPendingFile(null);
+              }}
+            >
+              เลือกรูปใหม่
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                setShowBrightnessWarning(false);
+                toast.success("พบใบหน้าแล้ว! ระบบจะปรับแสงให้อัตโนมัติ");
+              }}
+            >
+              ดำเนินการต่อ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Image Quality Warning Dialog */}
+      <AlertDialog open={showQualityWarning} onOpenChange={setShowQualityWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>⚠️ คุณภาพภาพไม่ผ่านเกณฑ์</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p className="mb-2">พบปัญหาดังนี้:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  {qualityWarningMsg.map((msg, i) => (
+                    <li key={i} className="text-sm text-destructive font-medium">{msg}</li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-sm">แนะนำให้ถ่ายรูปใหม่ในที่แสงพอเหมาะและกล้องนิ่ง</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                setShowQualityWarning(false);
+                setSelectedImage(null);
+                setPendingFile(null);
+              }}
+            >
+              เลือกรูปใหม่
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* No Face Detected Alert Dialog */}
       <AlertDialog open={showNoFaceDialog} onOpenChange={setShowNoFaceDialog}>

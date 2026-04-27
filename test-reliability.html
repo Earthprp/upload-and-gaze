@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inter-Rater Reliability Test - Gemini API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .upload-section {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: #f8f9ff;
+        }
+        
+        .upload-section.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .upload-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .image-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .image-item .image-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            padding: 3px 0;
+        }
+        
+        .run-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 30px;
+            transition: transform 0.2s;
+        }
+        
+        .run-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        
+        .run-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .progress {
+            margin-bottom: 30px;
+            display: none;
+        }
+        
+        .progress.active {
+            display: block;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .results.active {
+            display: block;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background: #f8f9ff;
+        }
+        
+        .metric-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .sd-value {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .sd-good {
+            color: #11998e;
+            font-weight: 600;
+        }
+        
+        .sd-warning {
+            color: #f39c12;
+            font-weight: 600;
+        }
+        
+        .sd-bad {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .summary {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .summary h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .summary p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .pdf-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .pdf-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            .upload-section,
+            .images-grid,
+            .run-btn,
+            .progress,
+            .pdf-btn,
+            .remove-btn {
+                display: none !important;
+            }
+            .results {
+                display: block !important;
+            }
+            table {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+            th {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            h2, h3 {
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Inter-Rater Reliability Test</h1>
+        <p class="subtitle">Submit the same images three times to Gemini API (temperature=0.2) and compute SD of each metric</p>
+        
+        <div class="upload-section" id="uploadSection">
+            <p style="margin-bottom: 15px; color: #666;">📸 Upload 10 images for testing</p>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose Images
+            </button>
+            <p style="margin-top: 10px; font-size: 12px; color: #999;">or drag and drop images here</p>
+        </div>
+        
+        <div class="images-grid" id="imagesGrid"></div>
+        
+        <button class="run-btn" id="runBtn" disabled onclick="runTest()">
+            🚀 Run Reliability Test (3 runs)
+        </button>
+        
+        <div class="progress" id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <p class="progress-text" id="progressText">Initializing...</p>
+        </div>
+        
+        <div class="results" id="results">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #333;">📊 Summary: Mean ± SD</h2>
+                <button class="pdf-btn" onclick="downloadPDF()">📄 Download PDF</button>
+            </div>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Run 1</th>
+                        <th>Run 2</th>
+                        <th>Run 3</th>
+                        <th>Mean ± SD</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                </tbody>
+            </table>
+            
+            <h2 style="margin: 30px 0 20px 0; color: #333;">📋 Detailed Results (All Images)</h2>
+            <div id="detailedResults"></div>
+            
+            <div class="summary">
+                <h3>📈 Summary</h3>
+                <p id="summaryText"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedImages = [];
+        const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/f835b9ca-db4e-4e5b-ad56-68e544f5ae99';
+        
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const imagesGrid = document.getElementById('imagesGrid');
+        const runBtn = document.getElementById('runBtn');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const results = document.getElementById('results');
+        const resultsBody = document.getElementById('resultsBody');
+        const summaryText = document.getElementById('summaryText');
+        
+        // Drag and drop
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+        
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+        
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(files) {
+            const fileArray = Array.from(files).slice(0, 10 - selectedImages.length);
+            
+            fileArray.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        selectedImages.push({
+                            file: file,
+                            dataUrl: e.target.result,
+                            base64: e.target.result.split(',')[1]
+                        });
+                        updateImagesGrid();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        function updateImagesGrid() {
+            imagesGrid.innerHTML = '';
+            selectedImages.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-item';
+                div.innerHTML = `
+                    <img src="${img.dataUrl}" alt="Image ${index + 1}">
+                    <button class="remove-btn" onclick="removeImage(${index})">×</button>
+                    <div class="image-label">Image ${index + 1}</div>
+                `;
+                imagesGrid.appendChild(div);
+            });
+            
+            runBtn.disabled = selectedImages.length === 0;
+        }
+        
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            updateImagesGrid();
+        }
+        
+        async function callN8nWebhook(imageBase64, mimeType) {
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image_base64: imageBase64,
+                    mime_type: mimeType || 'image/jpeg'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`n8n webhook error: ${response.status} ${response.statusText}`);
+            }
+
+            const text = await response.text();
+            console.log('n8n raw response:', text);
+            if (!text || text.trim() === '') {
+                throw new Error('n8n returned empty response — ตรวจสอบว่า workflow มี "Respond to Webhook" node และ branch สำหรับ image_base64 เชื่อมต่อถูกต้อง');
+            }
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                throw new Error(`n8n response is not valid JSON: ${text.substring(0, 200)}`);
+            }
+            const result = Array.isArray(data) ? data[0] : data;
+            return result;
+        }
+        
+        async function runTest() {
+            if (selectedImages.length === 0) return;
+            
+            runBtn.disabled = true;
+            progress.classList.add('active');
+            results.classList.remove('active');
+            
+            const runs = [[], [], []];
+            const totalCalls = selectedImages.length * 3;
+            let completedCalls = 0;
+            
+            try {
+                // Run 3 times
+                for (let run = 0; run < 3; run++) {
+                    progressText.textContent = `Running test ${run + 1}/3...`;
+                    
+                    for (let i = 0; i < selectedImages.length; i++) {
+                        progressText.textContent = `Run ${run + 1}/3 - Image ${i + 1}/${selectedImages.length}`;
+                        
+                        const result = await callN8nWebhook(selectedImages[i].base64, selectedImages[i].file.type);
+                        runs[run].push(result);
+                        
+                        completedCalls++;
+                        const progressPercent = Math.round((completedCalls / totalCalls) * 100);
+                        progressFill.style.width = progressPercent + '%';
+                        progressFill.textContent = progressPercent + '%';
+                        
+                        // Small delay to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+                
+                // Calculate statistics
+                calculateAndDisplayResults(runs);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error(error);
+            } finally {
+                runBtn.disabled = false;
+                progress.classList.remove('active');
+            }
+        }
+        
+        function calculateMeanSD(values) {
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+            const sd = Math.sqrt(variance);
+            return { mean, sd };
+        }
+        
+        function calculateAndDisplayResults(runs) {
+            const metrics = [
+                { key: 'overallScore', name: 'Overall Score' },
+                { key: 'smoothnessLevel', name: 'Smoothness Level' },
+                { key: 'hydrationLevel', name: 'Hydration Level' },
+                { key: 'toneEvenness', name: 'Tone Evenness' },
+                { key: 'detectionCounts', name: 'Detection Counts' }
+            ];
+            
+            resultsBody.innerHTML = '';
+            let allGood = true;
+            
+            metrics.forEach(metric => {
+                const run1Values = runs[0].map(r => r[metric.key]);
+                const run2Values = runs[1].map(r => r[metric.key]);
+                const run3Values = runs[2].map(r => r[metric.key]);
+                
+                const run1Avg = run1Values.reduce((a, b) => a + b, 0) / run1Values.length;
+                const run2Avg = run2Values.reduce((a, b) => a + b, 0) / run2Values.length;
+                const run3Avg = run3Values.reduce((a, b) => a + b, 0) / run3Values.length;
+                
+                const { mean, sd } = calculateMeanSD([run1Avg, run2Avg, run3Avg]);
+                
+                let status = '';
+                let statusClass = '';
+                if (sd < 5) {
+                    status = '✅ Excellent';
+                    statusClass = 'sd-good';
+                } else if (sd < 10) {
+                    status = '⚠️ Acceptable';
+                    statusClass = 'sd-warning';
+                    allGood = false;
+                } else {
+                    status = '❌ Poor';
+                    statusClass = 'sd-bad';
+                    allGood = false;
+                }
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="metric-name">${metric.name}</td>
+                    <td>${run1Avg.toFixed(2)}</td>
+                    <td>${run2Avg.toFixed(2)}</td>
+                    <td>${run3Avg.toFixed(2)}</td>
+                    <td><strong>${mean.toFixed(2)}</strong> ± <span class="${statusClass}">${sd.toFixed(2)}</span></td>
+                    <td class="${statusClass}">${status}</td>
+                `;
+                resultsBody.appendChild(row);
+            });
+            
+            // Display detailed results for each image
+            displayDetailedResults(runs, metrics);
+            
+            // Summary
+            if (allGood) {
+                summaryText.innerHTML = `
+                    <strong style="color: #11998e;">✅ All metrics show SD < 5 points</strong><br>
+                    This demonstrates excellent consistency and repeatability of the scoring framework.
+                    The Gemini API with temperature=0.2 provides reliable and consistent results across multiple runs.
+                `;
+            } else {
+                summaryText.innerHTML = `
+                    <strong style="color: #f39c12;">⚠️ Some metrics show SD ≥ 5 points</strong><br>
+                    While the overall consistency is acceptable, there is some variability in the scoring.
+                    This is expected with LLM-based measurements at temperature=0.2.
+                    Consider averaging multiple runs for more stable results.
+                `;
+            }
+            
+            results.classList.add('active');
+        }
+        
+        function displayDetailedResults(runs, metrics) {
+            const detailedResults = document.getElementById('detailedResults');
+            detailedResults.innerHTML = '';
+            
+            // Create a table for each metric
+            metrics.forEach(metric => {
+                const section = document.createElement('div');
+                section.style.marginBottom = '30px';
+                
+                const title = document.createElement('h3');
+                title.textContent = metric.name;
+                title.style.color = '#333';
+                title.style.marginBottom = '10px';
+                section.appendChild(title);
+                
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Run 1</th>
+                            <th>Run 2</th>
+                            <th>Run 3</th>
+                            <th>Mean ± SD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailed-${metric.key}"></tbody>
+                `;
+                section.appendChild(table);
+                detailedResults.appendChild(section);
+                
+                const tbody = document.getElementById(`detailed-${metric.key}`);
+                
+                // Add row for each image
+                for (let i = 0; i < selectedImages.length; i++) {
+                    const run1Val = runs[0][i][metric.key];
+                    const run2Val = runs[1][i][metric.key];
+                    const run3Val = runs[2][i][metric.key];
+                    
+                    const { mean, sd } = calculateMeanSD([run1Val, run2Val, run3Val]);
+                    
+                    let sdClass = '';
+                    if (sd < 5) sdClass = 'sd-good';
+                    else if (sd < 10) sdClass = 'sd-warning';
+                    else sdClass = 'sd-bad';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>Image ${i + 1}</strong></td>
+                        <td>${run1Val.toFixed(2)}</td>
+                        <td>${run2Val.toFixed(2)}</td>
+                        <td>${run3Val.toFixed(2)}</td>
+                        <td>${mean.toFixed(2)} ± <span class="${sdClass}">${sd.toFixed(2)}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+                
+                // Add average row
+                const run1Avg = runs[0].map(r => r[metric.key]).reduce((a, b) => a + b, 0) / runs[0].length;
+                const run2Avg = runs[1].map(r => r[metric.key]).reduce((a, b) => a + b, 0) / runs[1].length;
+                const run3Avg = runs[2].map(r => r[metric.key]).reduce((a, b) => a + b, 0) / runs[2].length;
+                const { mean: avgMean, sd: avgSD } = calculateMeanSD([run1Avg, run2Avg, run3Avg]);
+                
+                let avgSdClass = '';
+                if (avgSD < 5) avgSdClass = 'sd-good';
+                else if (avgSD < 10) avgSdClass = 'sd-warning';
+                else avgSdClass = 'sd-bad';
+                
+                const avgRow = document.createElement('tr');
+                avgRow.style.background = '#f8f9ff';
+                avgRow.style.fontWeight = '600';
+                avgRow.innerHTML = `
+                    <td><strong>Average</strong></td>
+                    <td>${run1Avg.toFixed(2)}</td>
+                    <td>${run2Avg.toFixed(2)}</td>
+                    <td>${run3Avg.toFixed(2)}</td>
+                    <td>${avgMean.toFixed(2)} ± <span class="${avgSdClass}">${avgSD.toFixed(2)}</span></td>
+                `;
+                tbody.appendChild(avgRow);
+            });
+        }
+
+        function downloadPDF() {
+            const timestamp = new Date().toLocaleString('th-TH');
+            const titleEl = document.querySelector('h1');
+            const originalTitle = titleEl.textContent;
+            titleEl.textContent = `🔬 Inter-Rater Reliability Test — ${timestamp}`;
+            window.print();
+            titleEl.textContent = originalTitle;
+        }
+    </script>
+</body>
+</html>
